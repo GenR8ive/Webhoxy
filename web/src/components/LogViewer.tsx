@@ -1,6 +1,6 @@
-import { createSignal, createResource, For, Show } from "solid-js";
+import { createSignal, createResource, For, Show, createEffect } from "solid-js";
 import { logApi } from "../lib/api";
-import { FiChevronDown, FiChevronUp, FiCheckCircle, FiXCircle, FiClock } from "solid-icons/fi";
+import { FiChevronDown, FiChevronUp, FiCheckCircle, FiXCircle, FiClock, FiChevronLeft, FiChevronRight } from "solid-icons/fi";
 import type { Log } from "../lib/types";
 
 interface LogViewerProps {
@@ -8,12 +8,26 @@ interface LogViewerProps {
 }
 
 function LogViewer(props: LogViewerProps) {
-  const [logs] = createResource(
-    () => props.webhookId,
-    (id) => (id ? logApi.list(id) : Promise.resolve([]))
+  const [page, setPage] = createSignal(1);
+  const [limit] = createSignal(20);
+
+  // Reset page when webhookId changes
+  createEffect(() => {
+    props.webhookId; // track dependency
+    setPage(1);
+  });
+
+  const [logsData] = createResource(
+    () => ({ webhookId: props.webhookId, page: page(), limit: limit() }),
+    ({ webhookId }) => logApi.list(webhookId, page(), limit())
   );
 
   const [expandedId, setExpandedId] = createSignal<number | null>(null);
+
+  const logs = () => logsData()?.logs || [];
+  const totalPages = () => logsData()?.totalPages || 1;
+  const currentPage = () => logsData()?.page || 1;
+  const total = () => logsData()?.total || 0;
 
   const toggleExpand = (id: number) => {
     setExpandedId(expandedId() === id ? null : id);
@@ -44,11 +58,13 @@ function LogViewer(props: LogViewerProps) {
     <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
       <div class="mb-6">
         <h2 class="text-2xl font-bold text-slate-800 mb-2">Webhook Logs</h2>
-        <p class="text-slate-600">View webhook delivery history and responses</p>
+        <p class="text-slate-600">
+          {total() > 0 ? `Total: ${total()} logs` : 'View webhook delivery history and responses'}
+        </p>
       </div>
 
       <Show
-        when={!logs.loading}
+        when={!logsData.loading}
         fallback={
           <div class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -57,7 +73,7 @@ function LogViewer(props: LogViewerProps) {
         }
       >
         <Show
-          when={logs()?.length}
+          when={logs().length}
           fallback={
             <div class="text-center py-12">
               <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -154,6 +170,33 @@ function LogViewer(props: LogViewerProps) {
               )}
             </For>
           </div>
+
+          {/* Pagination Controls */}
+          <Show when={totalPages() > 1}>
+            <div class="mt-6 flex items-center justify-between border-t border-slate-200 pt-4">
+              <div class="text-sm text-slate-600">
+                Page {currentPage()} of {totalPages()}
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage() === 1}
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                >
+                  <FiChevronLeft class="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages(), p + 1))}
+                  disabled={currentPage() === totalPages()}
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                >
+                  <span>Next</span>
+                  <FiChevronRight class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </Show>
         </Show>
       </Show>
     </div>

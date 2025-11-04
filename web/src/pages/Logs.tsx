@@ -10,7 +10,8 @@ function Logs() {
     searchParams.webhook ? parseInt(searchParams.webhook) : undefined
   );
 
-  const [webhooks] = createResource(() => webhookApi.list());
+  const [webhooksData] = createResource(() => webhookApi.list(1, 100)); // Get up to 100 webhooks for the dropdown
+  const webhooks = () => webhooksData()?.webhooks || [];
 
   return (
     <Layout>
