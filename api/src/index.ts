@@ -7,6 +7,8 @@ import { webhookRoutes } from './routes/webhooks';
 import { mappingRoutes } from './routes/mappings';
 import { logRoutes } from './routes/logs';
 import { fieldRoutes } from './routes/fields';
+import { adminRoutes } from './routes/admin';
+import { createLogCleanupService } from './services/log-cleanup';
 
 const fastify = Fastify({
   logger: {
@@ -35,12 +37,23 @@ await fastify.register(cors, {
 const db = await initDatabase(config.databaseUrl);
 fastify.decorate('db', db);
 
+// Initialize log cleanup service
+const logCleanupService = createLogCleanupService(
+  db,
+  config.logRetentionDays,
+  config.logCleanupIntervalHours,
+  fastify.log
+);
+fastify.decorate('logCleanup', logCleanupService);
+logCleanupService.start();
+
 // Health check route
 fastify.get('/', async () => {
   return { 
     message: '🧩 Webhoxy - Webhook Proxy Service',
     version: config.appVersion,
-    status: 'healthy'
+    status: 'healthy',
+    logCleanup: logCleanupService.getStats()
   };
 });
 
@@ -49,6 +62,7 @@ await fastify.register(webhookRoutes, { prefix: '/api' });
 await fastify.register(mappingRoutes, { prefix: '/api' });
 await fastify.register(logRoutes, { prefix: '/api' });
 await fastify.register(fieldRoutes, { prefix: '/api' });
+await fastify.register(adminRoutes, { prefix: '/api' });
 
 // Error handler
 fastify.setErrorHandler((error, request, reply) => {
@@ -87,6 +101,7 @@ const signals = ['SIGINT', 'SIGTERM'];
 signals.forEach((signal) => {
   process.on(signal, async () => {
     fastify.log.info(`Received ${signal}, closing server...`);
+    logCleanupService.stop();
     await fastify.close();
     process.exit(0);
   });
