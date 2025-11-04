@@ -8,8 +8,32 @@ const webhookIdParamsSchema = z.object({
 
 export async function fieldRoutes(fastify: FastifyInstance) {
   /**
+   * Get stored source fields for a webhook
+   */
+  fastify.get<{ 
+    Params: { webhook_id: number }; 
+    Reply: { fields: FieldInfo[] }
+  }>(
+    '/fields/:webhook_id/stored',
+    async (request) => {
+      const { webhook_id } = webhookIdParamsSchema.parse(request.params);
+      
+      const storedFields = fastify.db
+        .prepare(`
+          SELECT field_path as path, field_type as type, sample_value as sample
+          FROM source_fields 
+          WHERE webhook_id = ?
+          ORDER BY is_custom ASC, created_at ASC
+        `)
+        .all(webhook_id) as FieldInfo[];
+      
+      return { fields: storedFields };
+    }
+  );
+
+  /**
    * Get available source fields from the latest webhook payload
-   * This helps users see what fields are available for mapping
+   * This also saves the fields for future reference
    */
   fastify.get<{ 
     Params: { webhook_id: number }; 
@@ -22,13 +46,13 @@ export async function fieldRoutes(fastify: FastifyInstance) {
       // Get the latest log for this webhook
       const latestLog = fastify.db
         .prepare(`
-          SELECT payload 
+          SELECT source_payload, payload 
           FROM logs 
           WHERE webhook_id = ? 
           ORDER BY created_at DESC 
           LIMIT 1
         `)
-        .get(webhook_id) as { payload: string } | undefined;
+        .get(webhook_id) as { source_payload: string | null; payload: string } | undefined;
       
       if (!latestLog) {
         return reply.code(404).send({ 
@@ -37,8 +61,20 @@ export async function fieldRoutes(fastify: FastifyInstance) {
       }
       
       try {
-        const payload = JSON.parse(latestLog.payload);
+        // Use source_payload if available (new format), otherwise fall back to payload (old format)
+        const payloadString = latestLog.source_payload || latestLog.payload;
+        const payload = JSON.parse(payloadString);
         const fields = extractFieldsWithInfo(payload);
+        
+        // Store/update these fields in the database
+        const insertStmt = fastify.db.prepare(`
+          INSERT OR REPLACE INTO source_fields (webhook_id, field_path, field_type, sample_value, is_custom)
+          VALUES (?, ?, ?, ?, 0)
+        `);
+        
+        for (const field of fields) {
+          insertStmt.run(webhook_id, field.path, field.type, field.sample ? String(field.sample) : null);
+        }
         
         return { fields };
       } catch (error) {
@@ -47,6 +83,28 @@ export async function fieldRoutes(fastify: FastifyInstance) {
           error: 'Failed to parse webhook payload' 
         });
       }
+    }
+  );
+
+  /**
+   * Save a custom field added by the user
+   */
+  fastify.post<{ 
+    Params: { webhook_id: number };
+    Body: { field_path: string }; 
+    Reply: { success: boolean } 
+  }>(
+    '/fields/:webhook_id/custom',
+    async (request) => {
+      const { webhook_id } = webhookIdParamsSchema.parse(request.params);
+      const { field_path } = request.body;
+      
+      fastify.db.prepare(`
+        INSERT OR IGNORE INTO source_fields (webhook_id, field_path, field_type, is_custom)
+        VALUES (?, ?, 'custom', 1)
+      `).run(webhook_id, field_path);
+      
+      return { success: true };
     }
   );
 
