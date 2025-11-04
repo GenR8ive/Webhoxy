@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import type { DB, Webhook, WebhookCreateRequest, WebhookResponse } from '../db/types.js';
+import type { Webhook, WebhookCreateRequest, WebhookResponse } from '../db/types.js';
 import { forwardWebhook } from '../services/forwarder.js';
 import { applyMappings } from '../utils/json-mapper.js';
 
@@ -8,6 +8,10 @@ const createWebhookSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   target_url: z.string().url(),
+  api_key: z.string().optional(),
+  allowed_ips: z.string().optional(), // Comma-separated IP addresses
+  require_api_key: z.boolean().optional().default(false),
+  require_ip_whitelist: z.boolean().optional().default(false),
 });
 
 const webhookParamsSchema = z.object({
@@ -18,9 +22,14 @@ const webhookIdParamsSchema = z.object({
   webhook_id: z.coerce.number(),
 });
 
+const paginationQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(10),
+});
+
 declare module 'fastify' {
   interface FastifyInstance {
-    db: DB;
+    db: any;
   }
 }
 
@@ -33,11 +42,19 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       
       try {
         const stmt = fastify.db.prepare(`
-          INSERT INTO webhooks (name, description, target_url)
-          VALUES (?, ?, ?)
+          INSERT INTO webhooks (name, description, target_url, api_key, allowed_ips, require_api_key, require_ip_whitelist)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
         `);
         
-        const result = stmt.run(body.name, body.description, body.target_url);
+        const result = stmt.run(
+          body.name, 
+          body.description, 
+          body.target_url,
+          body.api_key || null,
+          body.allowed_ips || null,
+          body.require_api_key ? 1 : 0,
+          body.require_ip_whitelist ? 1 : 0
+        );
         const webhookId = result.lastInsertRowid as number;
         
         const proxyUrl = `http://localhost:${process.env.PORT || 8080}/hook/${webhookId}`;
@@ -52,13 +69,32 @@ export async function webhookRoutes(fastify: FastifyInstance) {
     }
   );
 
-  // List all webhooks
-  fastify.get<{ Reply: Webhook[] }>('/webhooks', async () => {
-    const webhooks = fastify.db
-      .prepare('SELECT * FROM webhooks ORDER BY created_at DESC')
-      .all() as Webhook[];
+  // List all webhooks with pagination
+  fastify.get<{ 
+    Querystring: { page?: number; limit?: number }; 
+    Reply: { webhooks: Webhook[]; total: number; page: number; limit: number; totalPages: number } 
+  }>('/webhooks', async (request) => {
+    const { page, limit } = paginationQuerySchema.parse(request.query);
+    const offset = (page - 1) * limit;
     
-    return webhooks;
+    // Get total count
+    const countResult = fastify.db
+      .prepare('SELECT COUNT(*) as count FROM webhooks')
+      .get() as { count: number };
+    const total = countResult.count;
+    
+    // Get paginated webhooks
+    const webhooks = fastify.db
+      .prepare('SELECT * FROM webhooks ORDER BY created_at DESC LIMIT ? OFFSET ?')
+      .all(limit, offset) as Webhook[];
+    
+    return {
+      webhooks,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   });
 
   // Get webhook by ID
@@ -76,6 +112,73 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       }
       
       return webhook;
+    }
+  );
+
+  // Update webhook
+  fastify.patch<{ Params: { id: number }; Body: Partial<WebhookCreateRequest> }>(
+    '/webhooks/:id',
+    async (request, reply) => {
+      const { id } = webhookParamsSchema.parse(request.params);
+      const body = createWebhookSchema.partial().parse(request.body);
+      
+      // Check if webhook exists
+      const existing = fastify.db
+        .prepare('SELECT * FROM webhooks WHERE id = ?')
+        .get(id) as Webhook | undefined;
+      
+      if (!existing) {
+        return reply.notFound('Webhook not found');
+      }
+      
+      // Build update query dynamically based on provided fields
+      const updates: string[] = [];
+      const values: any[] = [];
+      
+      if (body.name !== undefined) {
+        updates.push('name = ?');
+        values.push(body.name);
+      }
+      if (body.description !== undefined) {
+        updates.push('description = ?');
+        values.push(body.description);
+      }
+      if (body.target_url !== undefined) {
+        updates.push('target_url = ?');
+        values.push(body.target_url);
+      }
+      if (body.api_key !== undefined) {
+        updates.push('api_key = ?');
+        values.push(body.api_key || null);
+      }
+      if (body.allowed_ips !== undefined) {
+        updates.push('allowed_ips = ?');
+        values.push(body.allowed_ips || null);
+      }
+      if (body.require_api_key !== undefined) {
+        updates.push('require_api_key = ?');
+        values.push(body.require_api_key ? 1 : 0);
+      }
+      if (body.require_ip_whitelist !== undefined) {
+        updates.push('require_ip_whitelist = ?');
+        values.push(body.require_ip_whitelist ? 1 : 0);
+      }
+      
+      if (updates.length === 0) {
+        return reply.badRequest('No fields to update');
+      }
+      
+      values.push(id);
+      
+      const sql = `UPDATE webhooks SET ${updates.join(', ')} WHERE id = ?`;
+      fastify.db.prepare(sql).run(...values);
+      
+      // Return updated webhook
+      const updated = fastify.db
+        .prepare('SELECT * FROM webhooks WHERE id = ?')
+        .get(id) as Webhook;
+      
+      return updated;
     }
   );
 
@@ -114,6 +217,27 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       if (!webhook) {
         return reply.notFound('Webhook not found');
       }
+
+      // Validate API key if required
+      if (webhook.require_api_key) {
+        const providedApiKey = request.headers['x-api-key'] || (request.query as any)?.api_key;
+        
+        if (!providedApiKey || providedApiKey !== webhook.api_key) {
+          fastify.log.warn({ webhook_id }, 'Unauthorized: Invalid API key');
+          return reply.code(401).send({ error: 'Unauthorized: Invalid or missing API key' });
+        }
+      }
+
+      // Validate IP whitelist if required
+      if (webhook.require_ip_whitelist && webhook.allowed_ips) {
+        const clientIp = request.ip;
+        const allowedIps = webhook.allowed_ips.split(',').map(ip => ip.trim());
+        
+        if (!allowedIps.includes(clientIp)) {
+          fastify.log.warn({ webhook_id, clientIp, allowedIps }, 'Forbidden: IP not in whitelist');
+          return reply.code(403).send({ error: 'Forbidden: IP address not allowed' });
+        }
+      }
       
       // Get mappings
       const mappings = fastify.db
@@ -131,7 +255,8 @@ export async function webhookRoutes(fastify: FastifyInstance) {
           fastify.db,
           webhook_id,
           webhook.target_url,
-          transformedPayload,
+          payload, // original source payload
+          transformedPayload, // transformed payload
           fastify.log
         );
         

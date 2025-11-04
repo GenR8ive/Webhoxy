@@ -47,6 +47,52 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_logs_created_at ON logs(created_at);
     `,
   },
+  {
+    id: 2,
+    name: 'add_source_payload',
+    sql: `
+      -- Add source_payload column to store original incoming webhook data
+      ALTER TABLE logs ADD COLUMN source_payload TEXT;
+      
+      -- For existing rows, copy payload to source_payload
+      UPDATE logs SET source_payload = payload WHERE source_payload IS NULL;
+    `,
+  },
+  {
+    id: 3,
+    name: 'create_source_fields_table',
+    sql: `
+      -- Create source_fields table to persist available fields per webhook
+      CREATE TABLE IF NOT EXISTS source_fields (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        webhook_id INTEGER NOT NULL,
+        field_path TEXT NOT NULL,
+        field_type TEXT,
+        sample_value TEXT,
+        is_custom INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE,
+        UNIQUE(webhook_id, field_path)
+      );
+      
+      -- Create index for better performance
+      CREATE INDEX IF NOT EXISTS idx_source_fields_webhook_id ON source_fields(webhook_id);
+    `,
+  },
+  {
+    id: 4,
+    name: 'add_webhook_security',
+    sql: `
+      -- Add security columns to webhooks table
+      ALTER TABLE webhooks ADD COLUMN api_key TEXT;
+      ALTER TABLE webhooks ADD COLUMN allowed_ips TEXT;
+      ALTER TABLE webhooks ADD COLUMN require_api_key INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE webhooks ADD COLUMN require_ip_whitelist INTEGER NOT NULL DEFAULT 0;
+      
+      -- Create index for API key lookups
+      CREATE INDEX IF NOT EXISTS idx_webhooks_api_key ON webhooks(api_key);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {
