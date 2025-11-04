@@ -9,7 +9,8 @@ export async function forwardWebhook(
   db: any,
   webhookId: number,
   targetUrl: string,
-  payload: any,
+  sourcePayload: any,
+  transformedPayload: any,
   logger: FastifyBaseLogger
 ): Promise<ForwardResult> {
   logger.info({ webhookId, targetUrl }, 'Forwarding webhook');
@@ -21,20 +22,21 @@ export async function forwardWebhook(
         'Content-Type': 'application/json',
         'User-Agent': 'Webhoxy/1.0',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(transformedPayload),
     });
     
     const responseBody = await response.text();
     const statusCode = response.status;
     
     logger.info({ webhookId, statusCode }, 'Webhook forwarded successfully');
-    logger.info( {payload: JSON.stringify(payload)} , 'Payload');
+    logger.info( {transformedPayload: JSON.stringify(transformedPayload)} , 'Transformed Payload');
     
-    // Log delivery
+    // Log delivery with both source and transformed payloads
     logWebhookDelivery(
       db,
       webhookId,
-      JSON.stringify(payload),
+      JSON.stringify(sourcePayload),
+      JSON.stringify(transformedPayload),
       statusCode,
       responseBody
     );
@@ -47,7 +49,8 @@ export async function forwardWebhook(
     logWebhookDelivery(
       db,
       webhookId,
-      JSON.stringify(payload),
+      JSON.stringify(sourcePayload),
+      JSON.stringify(transformedPayload),
       0,
       `Error: ${error.message}`
     );
@@ -59,15 +62,16 @@ export async function forwardWebhook(
 function logWebhookDelivery(
   db: any,
   webhookId: number,
-  payload: string,
+  sourcePayload: string,
+  transformedPayload: string,
   responseCode: number,
   responseBody: string
 ): void {
   try {
     db.prepare(`
-      INSERT INTO logs (webhook_id, payload, response_code, response_body)
-      VALUES (?, ?, ?, ?)
-    `).run(webhookId, payload, responseCode, responseBody);
+      INSERT INTO logs (webhook_id, source_payload, payload, response_code, response_body)
+      VALUES (?, ?, ?, ?, ?)
+    `).run(webhookId, sourcePayload, transformedPayload, responseCode, responseBody);
   } catch (error: any) {
     console.error('Failed to log webhook delivery:', error);
   }

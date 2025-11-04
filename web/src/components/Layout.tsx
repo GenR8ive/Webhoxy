@@ -58,7 +58,7 @@ function Layout(props: LayoutProps) {
         <div class="container mx-auto px-4 py-6 text-center text-slate-600 text-sm">
           <p>
             Webhoxy - Open Source Webhook Proxy{" "}
-            <span class="text-slate-400">• Built with Rust & SolidJS</span>
+            <span class="text-slate-400">•  </span>
           </p>
         </div>
       </footer>

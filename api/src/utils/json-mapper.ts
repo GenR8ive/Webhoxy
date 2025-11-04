@@ -8,9 +8,48 @@ interface Mapping {
  * Applies field mappings to transform source JSON to target JSON
  */
 export function applyMappings(source: any, mappings: Mapping[]): any {
+  // Check if this is a JSON editor template mapping
+  const jsonEditorMapping = mappings.find(m => m.target_field === '_json_editor');
+  
+  if (jsonEditorMapping && jsonEditorMapping.fixed_value) {
+    // This is a JSON editor template - process it differently
+    try {
+      const template = jsonEditorMapping.fixed_value;
+      
+      // Replace all {{field.path}} with actual values from source
+      const processed = template.replace(/\{\{([^}]+)\}\}/g, (match, fieldPath) => {
+        const value = extractField(source, fieldPath.trim());
+        
+        if (value === null || value === undefined) {
+          console.warn(`Field '${fieldPath}' not found in source, using empty string`);
+          return '';
+        }
+        
+        // If value is an object or array, return as JSON string
+        if (typeof value === 'object') {
+          return JSON.stringify(value);
+        }
+        
+        return String(value);
+      });
+      
+      // Parse and return the processed template
+      return JSON.parse(processed);
+    } catch (error) {
+      console.error('Error processing JSON editor template:', error);
+      // Fall through to regular mapping
+    }
+  }
+  
+  // Regular field-by-field mapping
   const target: Record<string, any> = {};
   
   for (const mapping of mappings) {
+    // Skip the JSON editor mapping as it's already processed above
+    if (mapping.target_field === '_json_editor') {
+      continue;
+    }
+    
     try {
       let value: any;
       
