@@ -1,0 +1,49 @@
+{
+  "name": "webhoxy",
+  "version": "0.1.0",
+  "description": "A powerful, lightweight webhook proxy and transformation platform",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "dev": "npm-run-all --parallel dev:api dev:web",
+    "dev:api": "cd api && npm run dev",
+    "dev:web": "cd web && npm run dev",
+    "build": "npm-run-all build:api build:web",
+    "build:api": "cd api && npm run build",
+    "build:web": "cd web && npm run build",
+    "start": "npm-run-all --parallel start:api start:web",
+    "start:api": "cd api && npm start",
+    "start:web": "cd web && npm run serve",
+    "test": "cd api && npm test",
+    "lint": "npm-run-all lint:api lint:web",
+    "lint:api": "cd api && npm run lint",
+    "lint:web": "echo 'Web linting not configured'",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:restart": "docker-compose restart"
+  },
+  "keywords": [
+    "webhook",
+    "proxy",
+    "transformation",
+    "api",
+    "integration"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "devDependencies": {
+    "npm-run-all": "^4.1.5"
+  },
+  "workspaces": [
+    "api",
+    "web"
+  ]
+}
+
