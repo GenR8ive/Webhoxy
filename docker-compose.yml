@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # API Service (Backend)
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: webhoxy-api
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
+      - NODE_ENV=production
+      - DATABASE_URL=./data/webhoxy.db
+      - CORS_ORIGIN=http://localhost:5173,http://localhost:3000
+      - LOG_LEVEL=info
+      - LOG_PRETTY=false
+      - LOG_RETENTION_DAYS=7
+      - LOG_CLEANUP_INTERVAL_HOURS=24
+    volumes:
+      - ./api/data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - webhoxy-network
+
+  # Web Service (Frontend)
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: webhoxy-web
+    ports:
+      - "80:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - webhoxy-network
+
+networks:
+  webhoxy-network:
+    name: webhoxy-network
+    driver: bridge
+
+volumes:
+  webhoxy-data:
+    name: webhoxy-data
+

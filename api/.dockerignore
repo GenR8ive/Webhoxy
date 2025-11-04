@@ -1,20 +1,52 @@
+# Dependencies
 node_modules
 npm-debug.log
+yarn-error.log
+package-lock.json
+
+# Build output
 dist
-.git
-.gitignore
-README.md
+*.tsbuildinfo
+
+# Environment
 .env
-.env.*
-data
-*.db
-*.db-shm
-*.db-wal
+.env.local
+.env.*.local
+
+# Tests
+**/*.test.ts
+**/*.spec.ts
 coverage
+
+# Development
 .vscode
 .idea
 *.swp
 *.swo
 *~
-.DS_Store
 
+# Documentation
+*.md
+!README.md
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Database (don't copy existing data)
+data/*.db
+data/*.db-*
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
