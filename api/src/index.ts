@@ -65,7 +65,7 @@ await fastify.register(fieldRoutes, { prefix: '/api' });
 await fastify.register(adminRoutes, { prefix: '/api' });
 
 // Error handler
-fastify.setErrorHandler((error, request, reply) => {
+fastify.setErrorHandler((error, _request, reply) => {
   fastify.log.error(error);
   
   const statusCode = error.statusCode || 500;

@@ -1,4 +1,4 @@
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Webhook, WebhookCreateRequest, WebhookResponse } from '../db/types.js';
 import { forwardWebhook } from '../services/forwarder.js';
@@ -251,7 +251,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       
       // Forward to target URL
       try {
-        const { statusCode, responseBody } = await forwardWebhook(
+        const { statusCode } = await forwardWebhook(
           fastify.db,
           webhook_id,
           webhook.target_url,

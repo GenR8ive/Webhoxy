@@ -17,7 +17,7 @@ export function applyMappings(source: any, mappings: Mapping[]): any {
       const template = jsonEditorMapping.fixed_value;
       
       // Replace all {{field.path}} with actual values from source
-      const processed = template.replace(/\{\{([^}]+)\}\}/g, (match, fieldPath) => {
+      const processed = template.replace(/\{\{([^}]+)\}\}/g, (_match, fieldPath) => {
         const value = extractField(source, fieldPath.trim());
         
         if (value === null || value === undefined) {
