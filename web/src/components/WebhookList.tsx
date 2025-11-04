@@ -1,20 +1,31 @@
 import { createSignal, createResource, For, Show } from "solid-js";
 import { A } from "@solidjs/router";
 import { webhookApi } from "../lib/api";
-import { FiTrash2, FiExternalLink, FiCopy, FiCheck, FiZap } from "solid-icons/fi";
+import { FiTrash2, FiExternalLink, FiCopy, FiCheck, FiZap, FiChevronLeft, FiChevronRight, FiEdit } from "solid-icons/fi";
+import WebhookEditModal from "./WebhookEditModal";
+import type { Webhook } from "../lib/types";
 
 interface WebhookListProps {
   refresh?: number;
 }
 
 function WebhookList(props: WebhookListProps) {
-  const [webhooks, { refetch }] = createResource(
-    () => props.refresh,
-    () => webhookApi.list()
+  const [page, setPage] = createSignal(1);
+  const [limit] = createSignal(10);
+
+  const [webhooksData, { refetch }] = createResource(
+    () => ({ refresh: props.refresh, page: page(), limit: limit() }),
+    () => webhookApi.list(page(), limit())
   );
   
   const [copiedId, setCopiedId] = createSignal<number | null>(null);
   const [deletingId, setDeletingId] = createSignal<number | null>(null);
+  const [editingWebhook, setEditingWebhook] = createSignal<Webhook | null>(null);
+
+  const webhooks = () => webhooksData()?.webhooks || [];
+  const totalPages = () => webhooksData()?.totalPages || 1;
+  const currentPage = () => webhooksData()?.page || 1;
+  const total = () => webhooksData()?.total || 0;
 
   const handleDelete = async (id: number) => {
     if (!confirm("Are you sure you want to delete this webhook?")) {
@@ -46,13 +57,17 @@ function WebhookList(props: WebhookListProps) {
 
   return (
     <div class="bg-white rounded-xl shadow-lg border border-slate-200 p-6">
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-slate-800 mb-2">Your Webhooks</h2>
-        <p class="text-slate-600">Manage your webhook proxies</p>
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-slate-800 mb-2">Your Webhooks</h2>
+          <p class="text-slate-600">
+            {total() > 0 ? `Total: ${total()} webhooks` : 'Manage your webhook proxies'}
+          </p>
+        </div>
       </div>
 
       <Show
-        when={!webhooks.loading}
+        when={!webhooksData.loading}
         fallback={
           <div class="text-center py-12">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -61,7 +76,7 @@ function WebhookList(props: WebhookListProps) {
         }
       >
         <Show
-          when={webhooks()?.length}
+          when={webhooks().length}
           fallback={
             <div class="text-center py-12">
               <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -132,6 +147,13 @@ function WebhookList(props: WebhookListProps) {
                     </div>
 
                     <div class="flex flex-col space-y-2 ml-4">
+                      <button
+                        onClick={() => setEditingWebhook(webhook)}
+                        class="px-4 py-2 bg-slate-50 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium flex items-center justify-center space-x-1"
+                      >
+                        <FiEdit class="w-4 h-4" />
+                        <span>Edit</span>
+                      </button>
                       <A
                         href={`/mappings/${webhook.id}`}
                         class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium text-center"
@@ -158,7 +180,43 @@ function WebhookList(props: WebhookListProps) {
               )}
             </For>
           </div>
+
+          {/* Pagination Controls */}
+          <Show when={totalPages() > 1}>
+            <div class="mt-6 flex items-center justify-between border-t border-slate-200 pt-4">
+              <div class="text-sm text-slate-600">
+                Page {currentPage()} of {totalPages()}
+              </div>
+              <div class="flex items-center space-x-2">
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage() === 1}
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                >
+                  <FiChevronLeft class="w-4 h-4" />
+                  <span>Previous</span>
+                </button>
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages(), p + 1))}
+                  disabled={currentPage() === totalPages()}
+                  class="px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
+                >
+                  <span>Next</span>
+                  <FiChevronRight class="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </Show>
         </Show>
+      </Show>
+
+      {/* Edit Modal */}
+      <Show when={editingWebhook()}>
+        <WebhookEditModal
+          webhook={editingWebhook()!}
+          onClose={() => setEditingWebhook(null)}
+          onSuccess={() => refetch()}
+        />
       </Show>
     </div>
   );
