@@ -45,7 +45,7 @@ function WebhookList(props: WebhookListProps) {
   };
 
   const copyProxyUrl = async (id: number) => {
-    const url = `http://localhost:8080/hook/${id}`;
+    const url = `${window.location.origin}/api/hook/${id}`;
     try {
       await navigator.clipboard.writeText(url);
       setCopiedId(id);
@@ -107,7 +107,7 @@ function WebhookList(props: WebhookListProps) {
                       <div class="space-y-2 text-sm">
                         <div>
                           <span class="text-slate-500">Source:</span>{" "}
-                          <span class="text-slate-700">{webhook.source_url || "Any"}</span>
+                          <span class="text-slate-700">{webhook.description || "Any"}</span>
                         </div>
                         <div>
                           <span class="text-slate-500">Target:</span>{" "}
@@ -124,7 +124,7 @@ function WebhookList(props: WebhookListProps) {
                         <div class="flex items-center space-x-2">
                           <span class="text-slate-500">Proxy URL:</span>
                           <code class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono">
-                            http://localhost:8080/hook/{webhook.id}
+                            {window.location.origin}/api/hook/{webhook.id}
                           </code>
                           <button
                             onClick={() => copyProxyUrl(webhook.id)}
