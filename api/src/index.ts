@@ -1,14 +1,14 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
-import { config } from './config/';
-import { initDatabase } from './db/'; 
-import { webhookRoutes } from './routes/webhooks';
-import { mappingRoutes } from './routes/mappings';
-import { logRoutes } from './routes/logs';
-import { fieldRoutes } from './routes/fields';
-import { adminRoutes } from './routes/admin';
-import { createLogCleanupService } from './services/log-cleanup';
+import { config } from './config/index.js';
+import { initDatabase } from './db/index.js'; 
+import { webhookRoutes } from './routes/webhooks.js';
+import { mappingRoutes } from './routes/mappings.js';
+import { logRoutes } from './routes/logs.js';
+import { fieldRoutes } from './routes/fields.js';
+import { adminRoutes } from './routes/admin.js';
+import { createLogCleanupService } from './services/log-cleanup.js';
 
 const fastify = Fastify({
   logger: {

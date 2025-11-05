@@ -1,0 +1,45 @@
+# Production override for docker-compose
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  proxy:
+    # Production-specific proxy config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.webhoxy.service=proxy"
+      - "com.webhoxy.environment=production"
+
+  api:
+    # Production API config
+    environment:
+      - NODE_ENV=production
+      - LOG_PRETTY=false
+      - LOG_LEVEL=info
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.webhoxy.service=api"
+      - "com.webhoxy.environment=production"
+    # Security: Run as non-root user (already in Dockerfile)
+    read_only: false
+    tmpfs:
+      - /tmp
+
+  web:
+    # Production web config
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.webhoxy.service=web"
+      - "com.webhoxy.environment=production"
+

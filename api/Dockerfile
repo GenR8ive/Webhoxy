@@ -18,6 +18,9 @@ RUN npm run build
 # Production stage
 FROM node:20-alpine
 
+# Install wget for health checks
+RUN apk add --no-cache wget
+
 WORKDIR /app
 
 # Install production dependencies only

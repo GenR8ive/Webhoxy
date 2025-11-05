@@ -1,38 +1,75 @@
-# 🚀 Deployment Guide
+# Webhoxy Deployment Guide
 
-This guide covers different deployment options for Webhoxy.
+## Architecture Overview
 
----
+Webhoxy uses a reverse proxy architecture with three main services:
 
-## Table of Contents
+```
+Internet → Reverse Proxy (nginx) → API Service (Node.js/Fastify)
+                                 → Web Service (nginx/SPA)
+```
 
-- [Docker Deployment](#docker-deployment) (Recommended)
-- [Manual Deployment](#manual-deployment)
-- [Cloud Platforms](#cloud-platforms)
-- [Environment Configuration](#environment-configuration)
-- [Reverse Proxy Setup](#reverse-proxy-setup)
-- [Production Checklist](#production-checklist)
+### Services
 
----
+1. **Proxy Service** - Central entry point, routes all traffic
+2. **API Service** - Backend REST API for webhook management
+3. **Web Service** - Frontend SPA for UI
 
-## 🐳 Docker Deployment (Recommended)
+## Quick Start
 
-Docker is the easiest way to deploy Webhoxy with all services properly configured.
-
-### Prerequisites
-
-- Docker 20.10+
-- Docker Compose 2.0+
-
-### Quick Deploy
+### 1. Local Development
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/webhoxy.git
-cd webhoxy
+# Copy environment template
+cp env.example .env
 
 # Start all services
-docker-compose up -d
+docker-compose up --build
+
+# Access the application
+# Frontend: http://localhost
+# API: http://localhost/api
+# Webhooks: http://localhost/webhook/{webhook-id}
+```
+
+### 2. Production Deployment
+
+#### Step 1: Configure Environment
+
+Create a `.env` file from the template:
+
+```bash
+cp env.example .env
+```
+
+Edit `.env` with your production values:
+
+```env
+# Your domain name
+DOMAIN=webhoxy.yourdomain.com
+PUBLIC_URL=https://webhoxy.yourdomain.com
+
+# Ports (use 80/443 for production)
+PROXY_PORT=80
+PROXY_SSL_PORT=443
+
+# API Configuration
+NODE_ENV=production
+LOG_LEVEL=info
+LOG_PRETTY=false
+
+# CORS (add your domains)
+CORS_ORIGIN=https://webhoxy.yourdomain.com
+```
+
+#### Step 2: Deploy
+
+```bash
+# Pull latest changes
+git pull
+
+# Rebuild and start services
+docker-compose up --build -d
 
 # Check status
 docker-compose ps
@@ -41,463 +78,173 @@ docker-compose ps
 docker-compose logs -f
 ```
 
-**Access:**
-- Web UI: http://your-server:80
-- API: http://your-server:8080
+## Configuration Reference
 
-### Production Configuration
+### Environment Variables
 
-Edit `docker-compose.yml` for production:
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DOMAIN` | localhost | Your domain name |
+| `PUBLIC_URL` | http://localhost | Full public URL |
+| `PROXY_PORT` | 80 | HTTP port |
+| `PROXY_SSL_PORT` | 443 | HTTPS port (for SSL) |
+| `API_PORT` | 8080 | Internal API port |
+| `NODE_ENV` | production | Node environment |
+| `DATABASE_URL` | ./data/webhoxy.db | SQLite database path |
+| `CORS_ORIGIN` | * | Allowed CORS origins (comma-separated) |
+| `LOG_LEVEL` | info | Log level (fatal/error/warn/info/debug/trace) |
+| `LOG_RETENTION_DAYS` | 7 | Days to keep webhook logs |
 
-```yaml
-services:
-  api:
-    environment:
-      - NODE_ENV=production
-      - CORS_ORIGIN=https://your-domain.com
-      - LOG_LEVEL=info
-      - LOG_RETENTION_DAYS=30  # Keep logs for 30 days
-    volumes:
-      - ./api/data:/app/data  # Persistent storage
-    restart: always
+### Port Mapping
 
-  web:
-    restart: always
-```
+The reverse proxy handles all external traffic:
 
-### SSL/TLS with Traefik
+- **Port 80 (HTTP)**: Main entry point
+- **Port 443 (HTTPS)**: SSL/TLS traffic (configure SSL separately)
 
-```yaml
-services:
-  traefik:
-    image: traefik:v2.10
-    command:
-      - "--providers.docker=true"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.email=your@email.com"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./letsencrypt:/letsencrypt
-    restart: always
+Internal services are not exposed directly:
+- API Service: Internal port 8080 (not exposed)
+- Web Service: Internal port 80 (not exposed)
 
-  web:
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.webhoxy.rule=Host(`your-domain.com`)"
-      - "traefik.http.routers.webhoxy.entrypoints=websecure"
-      - "traefik.http.routers.webhoxy.tls.certresolver=letsencrypt"
+## URL Structure
 
-  api:
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.api.rule=Host(`api.your-domain.com`)"
-      - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
-```
+With the reverse proxy, all traffic goes through a single entry point:
 
----
+- **Frontend**: `http://your-domain/`
+- **API Endpoints**: `http://your-domain/api/*`
+- **Webhook Receivers**: `http://your-domain/webhook/{webhook-id}`
+- **Health Check**: `http://your-domain/health`
 
-## 🔧 Manual Deployment
+## SSL/TLS Setup (HTTPS)
 
-Deploy without Docker on a VPS or dedicated server.
+### Option 1: Using Let's Encrypt with Certbot
 
-### Prerequisites
+1. Update `nginx/nginx.conf` to add SSL configuration
+2. Use certbot to obtain certificates
+3. Mount certificates in docker-compose.yml
 
-- Node.js 20+
-- npm 10+
-- nginx or Apache (for reverse proxy)
-- PM2 or systemd (for process management)
-
-### 1. Setup Application
-
-```bash
-# Clone repository
-git clone https://github.com/yourusername/webhoxy.git
-cd webhoxy
-
-# Run setup
-npm install
-npm run setup
-
-# Build services
-npm run build
-```
-
-### 2. Configure Environment
-
-**API** (`api/.env`):
-```env
-PORT=8080
-HOST=0.0.0.0
-NODE_ENV=production
-DATABASE_URL=./data/webhoxy.db
-CORS_ORIGIN=https://your-domain.com
-LOG_LEVEL=info
-LOG_PRETTY=false
-LOG_RETENTION_DAYS=30
-```
-
-**Web** (`web/.env`):
-```env
-VITE_API_URL=https://api.your-domain.com
-```
-
-### 3. Start Services with PM2
-
-```bash
-# Install PM2
-npm install -g pm2
-
-# Start API
-cd api
-pm2 start npm --name "webhoxy-api" -- start
-
-# Start Web (with serve)
-cd ../web
-npm install -g serve
-pm2 start serve --name "webhoxy-web" -- -s dist -l 5173
-
-# Save PM2 configuration
-pm2 save
-pm2 startup
-```
-
-### 4. Configure Reverse Proxy
-
-**nginx Configuration** (`/etc/nginx/sites-available/webhoxy`):
+Example SSL configuration:
 
 ```nginx
-# Web UI
-server {
-    listen 80;
-    server_name your-domain.com;
-    
-    # Redirect to HTTPS
-    return 301 https://$server_name$request_uri;
-}
-
 server {
     listen 443 ssl http2;
-    server_name your-domain.com;
+    server_name ${DOMAIN};
     
-    # SSL certificates
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
     
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    
-    location / {
-        root /var/www/webhoxy/web/dist;
-        index index.html;
-        try_files $uri $uri/ /index.html;
-    }
-}
-
-# API
-server {
-    listen 80;
-    server_name api.your-domain.com;
-    
-    return 301 https://$server_name$request_uri;
-}
-
-server {
-    listen 443 ssl http2;
-    server_name api.your-domain.com;
-    
-    ssl_certificate /etc/letsencrypt/live/api.your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.your-domain.com/privkey.pem;
-    
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_cache_bypass $http_upgrade;
-    }
+    # ... rest of configuration
 }
 ```
 
-Enable the site:
-```bash
-sudo ln -s /etc/nginx/sites-available/webhoxy /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
+### Option 2: Using Cloudflare or Another CDN
 
-### 5. SSL Certificate with Let's Encrypt
+Set up Cloudflare in front of your server:
+1. Point your domain DNS to Cloudflare
+2. Enable SSL in Cloudflare
+3. Set `PUBLIC_URL=https://your-domain.com` in .env
+4. Cloudflare handles SSL termination
 
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d your-domain.com -d api.your-domain.com
-```
+## Monitoring
 
----
-
-## ☁️ Cloud Platforms
-
-### AWS EC2
-
-1. **Launch EC2 Instance**
-   - Ubuntu 22.04 LTS
-   - t3.small or larger
-   - Open ports: 22, 80, 443
-
-2. **Install Dependencies**
-```bash
-# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 20
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install Docker (optional)
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker ubuntu
-```
-
-3. **Deploy Application**
-   - Follow [Manual Deployment](#manual-deployment) or [Docker Deployment](#docker-deployment)
-
-### DigitalOcean
-
-1. **Create Droplet**
-   - Ubuntu 22.04
-   - Basic plan: $6/month
-   - Add SSH key
-
-2. **One-Click Deploy with Docker**
-```bash
-# Install Docker
-sudo apt update
-sudo apt install -y docker.io docker-compose
-
-# Clone and start
-git clone https://github.com/yourusername/webhoxy.git
-cd webhoxy
-sudo docker-compose up -d
-```
-
-### Heroku
-
-Not ideal due to ephemeral filesystem, but possible with external database.
-
-### Railway / Render
-
-Both support Docker deployments - connect your GitHub repository and configure:
-
-**Railway:**
-- Add `Dockerfile` to root
-- Set environment variables
-- Deploy
-
-**Render:**
-- Create Web Service from Docker
-- Set environment variables
-- Auto-deploy on push
-
----
-
-## ⚙️ Environment Configuration
-
-### Production Environment Variables
-
-**API**:
-```env
-# Server
-PORT=8080
-HOST=0.0.0.0
-NODE_ENV=production
-
-# Database
-DATABASE_URL=/data/webhoxy.db
-
-# Security
-CORS_ORIGIN=https://your-domain.com
-
-# Logging
-LOG_LEVEL=info
-LOG_PRETTY=false
-
-# Performance
-LOG_RETENTION_DAYS=30
-LOG_CLEANUP_INTERVAL_HOURS=24
-```
-
-**Web**:
-```env
-VITE_API_URL=https://api.your-domain.com
-```
-
----
-
-## 🔒 Production Checklist
-
-### Security
-
-- [ ] Enable HTTPS/SSL
-- [ ] Configure CORS properly
-- [ ] Set secure environment variables
-- [ ] Use API keys for webhook endpoints
-- [ ] Configure IP whitelisting
-- [ ] Regular security updates
-
-### Performance
-
-- [ ] Enable gzip compression
-- [ ] Configure CDN (CloudFlare, etc.)
-- [ ] Set up database backups
-- [ ] Configure log retention
-- [ ] Monitor resource usage
-
-### Monitoring
-
-- [ ] Set up uptime monitoring
-- [ ] Configure log aggregation
-- [ ] Set up error tracking (Sentry, etc.)
-- [ ] Monitor disk usage
-- [ ] Set up alerts
-
-### Backups
+### Check Service Health
 
 ```bash
-# Backup script
-#!/bin/bash
-BACKUP_DIR="/backups"
-DATE=$(date +%Y%m%d_%H%M%S)
+# All services status
+docker-compose ps
 
+# Individual service logs
+docker-compose logs api
+docker-compose logs web
+docker-compose logs proxy
+
+# Follow logs in real-time
+docker-compose logs -f
+
+# Health check
+curl http://localhost/health
+```
+
+### Common Issues
+
+**Issue**: Proxy shows unhealthy
+- **Solution**: Check if API and Web services are healthy first
+- **Check**: `docker-compose logs proxy`
+
+**Issue**: Can't access webhook endpoints
+- **Solution**: Verify PUBLIC_URL is set correctly
+- **Check**: Webhook URLs should use the PUBLIC_URL domain
+
+## Scaling
+
+For high-traffic deployments:
+
+1. **Horizontal Scaling**: Run multiple API instances
+2. **Load Balancing**: Add more upstreams in nginx.conf
+3. **Database**: Consider migrating from SQLite to PostgreSQL
+
+## Backup and Restore
+
+### Backup
+
+```bash
 # Backup database
-cp /app/api/data/webhoxy.db $BACKUP_DIR/webhoxy_$DATE.db
+docker-compose exec api cp /app/data/webhoxy.db /app/data/backup-$(date +%Y%m%d).db
 
-# Backup environment
-cp /app/api/.env $BACKUP_DIR/api_env_$DATE
-cp /app/web/.env $BACKUP_DIR/web_env_$DATE
-
-# Keep only last 30 days
-find $BACKUP_DIR -name "webhoxy_*.db" -mtime +30 -delete
+# Copy backup to host
+docker cp webhoxy-api:/app/data/backup-*.db ./backups/
 ```
 
-Add to crontab:
+### Restore
+
 ```bash
-0 2 * * * /path/to/backup.sh
+# Copy backup to container
+docker cp ./backups/backup-20250101.db webhoxy-api:/app/data/webhoxy.db
+
+# Restart services
+docker-compose restart api
 ```
 
----
+## Maintenance
 
-## 🔄 Updates
-
-### Docker
+### Update Application
 
 ```bash
-# Pull latest code
+# Pull latest changes
 git pull
 
 # Rebuild and restart
 docker-compose down
-docker-compose build
-docker-compose up -d
+docker-compose up --build -d
 ```
 
-### Manual
+### Clean Up
 
 ```bash
-# Pull latest code
-git pull
+# Remove old containers
+docker-compose down
 
-# Rebuild
-npm run build
+# Remove unused images
+docker system prune -a
 
-# Restart services
-pm2 restart all
+# Remove volumes (WARNING: deletes data)
+docker-compose down -v
 ```
 
----
+## Security Best Practices
 
-## 📊 Monitoring
+1. **Change default ports** in production if needed
+2. **Enable SSL/TLS** for production deployments
+3. **Set proper CORS_ORIGIN** - don't use `*` in production
+4. **Regular backups** of the database
+5. **Monitor logs** for suspicious activity
+6. **Use firewall rules** to restrict access
+7. **Keep Docker images updated**
 
-### Health Check Endpoints
+## Support
 
-```bash
-# API health
-curl https://api.your-domain.com/
-
-# Web health
-curl https://your-domain.com/
-```
-
-### Logs
-
-```bash
-# Docker
-docker-compose logs -f api
-docker-compose logs -f web
-
-# PM2
-pm2 logs webhoxy-api
-pm2 logs webhoxy-web
-```
-
----
-
-## 🆘 Troubleshooting
-
-### Service won't start
-
-```bash
-# Check logs
-docker-compose logs
-
-# Check port conflicts
-netstat -tulpn | grep :8080
-netstat -tulpn | grep :80
-```
-
-### Database issues
-
-```bash
-# Check database file
-ls -lh api/data/webhoxy.db
-
-# Backup and recreate
-cp api/data/webhoxy.db api/data/webhoxy.db.backup
-rm api/data/webhoxy.db
-# Restart service to recreate
-```
-
-### Permission issues
-
-```bash
-# Fix ownership (Docker)
-sudo chown -R 1000:1000 api/data
-
-# Fix permissions
-chmod 755 api/data
-chmod 644 api/data/webhoxy.db
-```
-
----
-
-## 📞 Support
-
-- **Documentation**: See README.md
-- **Issues**: GitHub Issues
-- **Security**: Report to security@your-domain.com
-
----
-
-**Happy Deploying!** 🚀
-
+For issues or questions:
+1. Check logs: `docker-compose logs`
+2. Check health: `curl http://localhost/health`
+3. Review this guide
+4. Check the main README.md for application usage
