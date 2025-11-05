@@ -12,14 +12,8 @@ import type {
   LogListResponse,
 } from "./types";
 
-// Get base URL from environment or use default
-const getApiBaseUrl = () => {
-  const envUrl = import.meta.env.VITE_API_URL || "http://localhost:8080";
-  // Ensure URL doesn't end with /api if already included
-  return envUrl.endsWith('/api') ? envUrl : `${envUrl}/api`;
-};
 
-const API_BASE_URL = getApiBaseUrl();
+const API_BASE_URL = "/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL,

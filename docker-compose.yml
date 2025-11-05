@@ -50,7 +50,7 @@ services:
       - ./api/data:/app/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8080/"]
+      test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://127.0.0.1:$${PORT:-8080}/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
