@@ -67,7 +67,7 @@ function LogViewer(props: LogViewerProps) {
         when={!logsData.loading}
         fallback={
           <div class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             <p class="mt-3 text-slate-500">Loading logs...</p>
           </div>
         }

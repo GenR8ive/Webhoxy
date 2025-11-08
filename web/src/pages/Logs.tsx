@@ -34,7 +34,7 @@ function Logs() {
                 const value = e.currentTarget.value;
                 setSelectedWebhookId(value ? parseInt(value) : undefined);
               }}
-              class="w-full md:w-96 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+              class="w-full md:w-96 px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
             >
               <option value="">All Webhooks</option>
               {webhooks()?.map((webhook) => (

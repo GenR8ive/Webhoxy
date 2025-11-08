@@ -605,7 +605,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
           <div class="flex items-center space-x-3">
             <button
               onClick={handleBeautify}
-              class="flex items-center space-x-2 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+              class="flex items-center space-x-2 bg-primary-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-primary-700 transition-colors cursor-pointer"
             >
               <FiCheck class="w-4 h-4" />
               <span>Beautify</span>
@@ -645,7 +645,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
       </Show>
 
       {/* Quick Templates */}
-      <div class="mb-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border-2 border-indigo-200">
+      <div class="mb-6 bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg p-4 border-2 border-primary-200">
         <h3 class="font-bold text-slate-800 mb-3 text-sm">🎯 Quick Templates</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <For each={templates}>
@@ -653,7 +653,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
               <button
                 type="button"
                 onClick={() => handleApplyTemplate(template)}
-                class="p-2 bg-white rounded-lg border-2 border-slate-300 hover:border-blue-400 transition-all text-left hover:shadow-md cursor-pointer"
+                class="p-2 bg-white rounded-lg border-2 border-slate-300 hover:border-primary-400 transition-all text-left hover:shadow-md cursor-pointer"
               >
                 <div class="flex items-center space-x-2">
                   <span class="text-lg">{template.icon}</span>
@@ -674,7 +674,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
               <button
                 onClick={handleGetFields}
                 disabled={loadingFields()}
-                class="flex items-center space-x-1 text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 transition-colors disabled:opacity-50 cursor-pointer"
+                class="flex items-center space-x-1 text-xs bg-primary-500 text-white px-2 py-1 rounded hover:bg-primary-600 transition-colors disabled:opacity-50 cursor-pointer"
               >
                 <FiRefreshCw class={`w-3 h-3 ${loadingFields() ? "animate-spin" : ""}`} />
                 <span>Get Fields</span>
@@ -701,10 +701,10 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
                   };
 
                   return (
-                    <div class="group relative bg-white p-2 rounded border border-slate-200 hover:border-blue-300 transition-all">
+                    <div class="group relative bg-white p-2 rounded border border-slate-200 hover:border-primary-300 transition-all">
                       <div class="flex items-start justify-between gap-2">
                         <div class="flex-1 min-w-0">
-                          <code class="text-xs font-mono font-bold text-purple-600 block truncate">
+                          <code class="text-xs font-mono font-bold text-primary-600 block truncate">
                             {field.path}
                           </code>
                           <div class="flex items-center space-x-2 mt-0.5">
@@ -721,7 +721,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
                         </div>
                         <button
                           onClick={() => copyFieldReference(field.path)}
-                          class="opacity-0 group-hover:opacity-100 text-blue-600 hover:text-blue-800 transition-all cursor-pointer flex-shrink-0"
+                          class="opacity-0 group-hover:opacity-100 text-primary-600 hover:text-primary-800 transition-all cursor-pointer flex-shrink-0"
                           title="Copy reference"
                         >
                           <FiCopy class="w-3 h-3" />
@@ -749,7 +749,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
               {/* Autocomplete Popup */}
               <Show when={autocomplete().show}>
                 <div
-                  class="autocomplete-popup fixed bg-white border-2 border-blue-400 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50"
+                  class="autocomplete-popup fixed bg-white border-2 border-primary-400 rounded-lg shadow-2xl max-h-64 overflow-y-auto z-50"
                   style={{
                     top: `${autocomplete().y}px`,
                     left: `${autocomplete().x}px`,
@@ -771,14 +771,14 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
 
                       return (
                         <button
-                          class={`w-full text-left px-3 py-2 hover:bg-blue-50 transition-colors cursor-pointer border-b border-slate-100 ${
-                            index() === selectedSuggestionIndex() ? "bg-blue-100 autocomplete-item-selected" : ""
+                          class={`w-full text-left px-3 py-2 hover:bg-primary-50 transition-colors cursor-pointer border-b border-slate-100 ${
+                            index() === selectedSuggestionIndex() ? "bg-primary-100 autocomplete-item-selected" : ""
                           }`}
                           onClick={() => insertSourceField(field.path)}
                         >
                           <div class="flex items-start justify-between gap-2">
                             <div class="flex-1 min-w-0">
-                              <code class="text-xs font-mono font-bold text-purple-600 block truncate">
+                              <code class="text-xs font-mono font-bold text-primary-600 block truncate">
                                 {field.path}
                               </code>
                               <div class="flex items-center space-x-2 mt-0.5">
@@ -833,7 +833,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
 
             <div class="mt-3 pt-3 border-t border-slate-200">
               <p class="text-xs text-slate-500">
-                💡 Type <kbd class="bg-slate-700 text-white px-2 py-0.5 rounded text-xs font-mono">@</kbd> to insert source fields. Variables appear as <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gradient-to-r from-purple-500 to-pink-500 text-white">chips</span>. Click chip + press <kbd class="bg-slate-700 text-white px-1.5 py-0.5 rounded text-xs">Esc</kbd> to delete.
+                💡 Type <kbd class="bg-slate-700 text-white px-2 py-0.5 rounded text-xs font-mono">@</kbd> to insert source fields. Variables appear as <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gradient-to-r from-primary-500 to-secondary-500 text-white">chips</span>. Click chip + press <kbd class="bg-slate-700 text-white px-1.5 py-0.5 rounded text-xs">Esc</kbd> to delete.
               </p>
             </div>
           </div>

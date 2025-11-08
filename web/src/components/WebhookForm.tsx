@@ -100,7 +100,7 @@ function WebhookForm(props: WebhookFormProps) {
             onInput={(e) => setName(e.currentTarget.value)}
             placeholder="e.g., GitHub -> Slack"
             required
-            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
           />
         </div>
 
@@ -115,7 +115,7 @@ function WebhookForm(props: WebhookFormProps) {
             value={description()}
             onInput={(e) => setDescription(e.currentTarget.value)}
             placeholder="e.g., GitHub API, Stripe Webhooks"
-            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
           />
           <p class="mt-1 text-xs text-slate-500">
             A description of the webhook
@@ -133,7 +133,7 @@ function WebhookForm(props: WebhookFormProps) {
             onInput={(e) => setTargetUrl(e.currentTarget.value)}
             placeholder="https://your-app.com/webhook"
             required
-            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
           />
           <p class="mt-1 text-xs text-slate-500">
             The URL where webhooks will be forwarded to
@@ -160,16 +160,16 @@ function WebhookForm(props: WebhookFormProps) {
           <Show when={showSecurity()}>
             <div class="p-4 space-y-4 bg-white">
               {/* API Key Authentication */}
-              <div class="border-l-4 border-blue-500 pl-4">
+              <div class="border-l-4 border-primary-500 pl-4">
                 <label class="flex items-center space-x-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={requireApiKey()}
                     onChange={(e) => setRequireApiKey(e.currentTarget.checked)}
-                    class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+                    class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-2 focus:ring-primary-500"
                   />
                   <div class="flex items-center space-x-2">
-                    <FiLock class="w-4 h-4 text-blue-600" />
+                    <FiLock class="w-4 h-4 text-primary-600" />
                     <span class="text-sm font-medium text-slate-700">Require API Key</span>
                   </div>
                 </label>
@@ -183,7 +183,7 @@ function WebhookForm(props: WebhookFormProps) {
                           value={apiKey()}
                           onInput={(e) => setApiKey(e.currentTarget.value)}
                           placeholder="Enter or generate API key"
-                          class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+                          class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none font-mono"
                         />
                         <button
                           type="button"
@@ -199,7 +199,7 @@ function WebhookForm(props: WebhookFormProps) {
                       <button
                         type="button"
                         onClick={generateApiKey}
-                        class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                        class="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
                       >
                         Generate
                       </button>
@@ -257,7 +257,7 @@ function WebhookForm(props: WebhookFormProps) {
         <button
           type="submit"
           disabled={loading()}
-          class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 focus:ring-4 focus:ring-blue-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+          class="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-primary-600 hover:to-secondary-600 focus:ring-4 focus:ring-primary-300 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
         >
           {loading() ? "Creating..." : "Create Webhook"}
         </button>

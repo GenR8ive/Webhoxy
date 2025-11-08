@@ -16,7 +16,7 @@ function Home() {
       <div class="space-y-8">
         {/* Hero Section */}
         <div class="text-center py-8">
-          <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+          <h1 class="text-4xl font-bold bg-gradient-to-r from-primary-500 to-secondary-500 bg-clip-text text-transparent mb-4">
             Webhook Proxy Dashboard
           </h1>
           <p class="text-lg text-slate-600 max-w-2xl mx-auto">
@@ -39,26 +39,26 @@ function Home() {
 
         {/* Info Cards */}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-8">
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
-            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
+          <div class="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 border border-primary-200">
+            <div class="w-12 h-12 bg-primary-500 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-blue-900 mb-2">Fast Forwarding</h3>
-            <p class="text-sm text-blue-700">
+            <h3 class="text-lg font-semibold text-primary-900 mb-2">Fast Forwarding</h3>
+            <p class="text-sm text-primary-700">
               Instantly forward webhooks to multiple destinations with minimal latency
             </p>
           </div>
 
-          <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 border border-purple-200">
-            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
+          <div class="bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-xl p-6 border border-secondary-200">
+            <div class="w-12 h-12 bg-secondary-500 rounded-lg flex items-center justify-center mb-4">
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-purple-900 mb-2">Field Mapping</h3>
-            <p class="text-sm text-purple-700">
+            <h3 class="text-lg font-semibold text-secondary-900 mb-2">Field Mapping</h3>
+            <p class="text-sm text-secondary-700">
               Transform JSON payloads with custom field mappings and fixed values
             </p>
           </div>

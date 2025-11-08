@@ -17,7 +17,7 @@ function MappingsPage() {
         {/* Back Button */}
         <A
           href="/"
-          class="inline-flex items-center space-x-2 text-slate-600 hover:text-blue-600 transition-colors"
+          class="inline-flex items-center space-x-2 text-slate-600 hover:text-primary-600 transition-colors"
         >
           <FiArrowLeft class="w-4 h-4" />
           <span>Back to Dashboard</span>
@@ -52,21 +52,21 @@ function MappingsPage() {
         <MappingEditor webhookId={webhookId()} />
 
         {/* Help Section */}
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
-          <h3 class="font-semibold text-blue-900 mb-3">💡 How Field Mapping Works</h3>
-          <div class="space-y-2 text-sm text-blue-800">
+        <div class="bg-primary-50 border border-primary-200 rounded-xl p-6">
+          <h3 class="font-semibold text-primary-900 mb-3">💡 How Field Mapping Works</h3>
+          <div class="space-y-2 text-sm text-primary-800">
             <p>
-              <strong>Source Field:</strong> The path to extract data from incoming webhooks (e.g., <code class="bg-blue-100 px-1 rounded">user.email</code>)
+              <strong>Source Field:</strong> The path to extract data from incoming webhooks (e.g., <code class="bg-primary-100 px-1 rounded">user.email</code>)
             </p>
             <p>
-              <strong>Target Field:</strong> Where to place the data in the forwarded payload (e.g., <code class="bg-blue-100 px-1 rounded">contact.email</code>)
+              <strong>Target Field:</strong> Where to place the data in the forwarded payload (e.g., <code class="bg-primary-100 px-1 rounded">contact.email</code>)
             </p>
             <p>
               <strong>Fixed Value:</strong> Use a constant value instead of extracting from source
             </p>
           </div>
-          <div class="mt-4 p-3 bg-white rounded-lg border border-blue-200">
-            <p class="text-xs text-blue-700 font-medium mb-2">Example:</p>
+          <div class="mt-4 p-3 bg-white rounded-lg border border-primary-200">
+            <p class="text-xs text-primary-700 font-medium mb-2">Example:</p>
             <code class="text-xs text-slate-700">
               {"{ user: { name: 'John' } }"} → {"{ userName: 'John' }"}
             </code>

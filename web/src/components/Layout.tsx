@@ -1,6 +1,8 @@
-import { A } from "@solidjs/router";
-import { children, type JSX } from "solid-js";
-import { FiHome, FiZap, FiActivity } from "solid-icons/fi";
+import { A, useNavigate } from "@solidjs/router";
+import { children, type JSX, Show } from "solid-js";
+import { FiHome, FiActivity, FiLogOut, FiUser } from "solid-icons/fi";
+import { user, logout, checkAuth } from "../lib/auth";
+import ChangePasswordModal from "./ChangePasswordModal";
 
 interface LayoutProps {
   children: JSX.Element;
@@ -8,6 +10,12 @@ interface LayoutProps {
 
 function Layout(props: LayoutProps) {
   const c = children(() => props.children);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
@@ -16,42 +24,64 @@ function Layout(props: LayoutProps) {
         <div class="container mx-auto px-4 py-4">
           <div class="flex items-center justify-between">
             <div class="flex items-center space-x-2">
-              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <FiZap class="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Webhoxy
-                </h1>
-                <p class="text-xs text-slate-500">Webhook Proxy Service</p>
-              </div>
+              <img src="/logo.svg" alt="Webhoxy Logo" class="h-10 w-auto" />
             </div>
 
-            <nav class="flex space-x-1">
-              <A
-                href="/"
-                class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
-                activeClass="bg-blue-50 text-blue-600 font-medium"
-                end
-              >
-                <FiHome class="w-4 h-4" />
-                <span>Dashboard</span>
-              </A>
-              <A
-                href="/logs"
-                class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
-                activeClass="bg-blue-50 text-blue-600 font-medium"
-              >
-                <FiActivity class="w-4 h-4" />
-                <span>Logs</span>
-              </A>
-            </nav>
+            <div class="flex items-center space-x-4">
+              <nav class="flex space-x-1">
+                <A
+                  href="/"
+                  class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  activeClass="bg-primary-50 text-primary-600 font-medium"
+                  end
+                >
+                  <FiHome class="w-4 h-4" />
+                  <span>Dashboard</span>
+                </A>
+                <A
+                  href="/logs"
+                  class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors"
+                  activeClass="bg-primary-50 text-primary-600 font-medium"
+                >
+                  <FiActivity class="w-4 h-4" />
+                  <span>Logs</span>
+                </A>
+              </nav>
+
+              {/* User Menu */}
+              <Show when={user()}>
+                <div class="flex items-center space-x-3 pl-4 border-l border-slate-200">
+                  <div class="flex items-center space-x-2 text-slate-600">
+                    <FiUser class="w-4 h-4" />
+                    <span class="text-sm font-medium">{user()?.username}</span>
+                  </div>
+                  <button
+                    onClick={handleLogout}
+                    class="flex items-center space-x-2 px-4 py-2 rounded-lg hover:bg-red-50 text-red-600 hover:text-red-700 transition-colors"
+                    title="Logout"
+                  >
+                    <FiLogOut class="w-4 h-4" />
+                    <span class="text-sm">Logout</span>
+                  </button>
+                </div>
+              </Show>
+            </div>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
       <main class="container mx-auto px-4 py-8">{c()}</main>
+
+      {/* Change Password Modal */}
+      <Show when={user()?.mustChangePassword}>
+        <ChangePasswordModal
+          onSuccess={async () => {
+            // Refresh user data after password change
+            await checkAuth();
+          }}
+        />
+      </Show>
 
       {/* Footer */}
       <footer class="bg-white border-t border-slate-200 mt-16">

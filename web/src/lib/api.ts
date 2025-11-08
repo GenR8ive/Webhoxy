@@ -11,6 +11,7 @@ import type {
   WebhookListResponse,
   LogListResponse,
 } from "./types";
+import { getAccessToken } from "./auth";
 
 
 const API_BASE_URL = "/api";
@@ -21,6 +22,29 @@ const api = axios.create({
     "Content-Type": "application/json",
   },
 });
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle 401 errors (unauthorized)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Clear auth and redirect to login
+      localStorage.removeItem("webhoxy_access_token");
+      localStorage.removeItem("webhoxy_refresh_token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
 
 // Webhook API
 export const webhookApi = {

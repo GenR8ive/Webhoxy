@@ -70,7 +70,7 @@ function WebhookList(props: WebhookListProps) {
         when={!webhooksData.loading}
         fallback={
           <div class="text-center py-12">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             <p class="mt-3 text-slate-500">Loading webhooks...</p>
           </div>
         }
@@ -115,7 +115,7 @@ function WebhookList(props: WebhookListProps) {
                             href={webhook.target_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="text-blue-600 hover:underline inline-flex items-center space-x-1"
+                            class="text-primary-600 hover:underline inline-flex items-center space-x-1"
                           >
                             <span class="truncate max-w-md">{webhook.target_url}</span>
                             <FiExternalLink class="w-3 h-3 flex-shrink-0" />
@@ -128,7 +128,7 @@ function WebhookList(props: WebhookListProps) {
                           </code>
                           <button
                             onClick={() => copyProxyUrl(webhook.id)}
-                            class="text-slate-500 hover:text-blue-600 transition-colors"
+                            class="text-slate-500 hover:text-primary-600 transition-colors"
                             title="Copy proxy URL"
                           >
                             <Show
@@ -156,13 +156,13 @@ function WebhookList(props: WebhookListProps) {
                       </button>
                       <A
                         href={`/mappings/${webhook.id}`}
-                        class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-medium text-center"
+                        class="px-4 py-2 bg-primary-50 text-primary-600 rounded-lg hover:bg-primary-100 transition-colors text-sm font-medium text-center"
                       >
                         Mappings
                       </A>
                       <A
                         href={`/logs?webhook=${webhook.id}`}
-                        class="px-4 py-2 bg-purple-50 text-purple-600 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium text-center"
+                        class="px-4 py-2 bg-secondary-50 text-secondary-600 rounded-lg hover:bg-secondary-100 transition-colors text-sm font-medium text-center"
                       >
                         Logs
                       </A>

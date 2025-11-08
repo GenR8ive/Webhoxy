@@ -57,7 +57,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
   };
 
   return (
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={props.onClose}>
+    <div class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={props.onClose}>
       <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div class="flex items-center justify-between p-6 border-b border-slate-200">
@@ -83,7 +83,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
               onInput={(e) => setName(e.currentTarget.value)}
               placeholder="e.g., GitHub -> Slack"
               required
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
             />
           </div>
 
@@ -98,7 +98,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
               value={description()}
               onInput={(e) => setDescription(e.currentTarget.value)}
               placeholder="e.g., GitHub API, Stripe Webhooks"
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
             />
           </div>
 
@@ -113,7 +113,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
               onInput={(e) => setTargetUrl(e.currentTarget.value)}
               placeholder="https://your-app.com/webhook"
               required
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
             />
           </div>
 
@@ -136,16 +136,16 @@ function WebhookEditModal(props: WebhookEditModalProps) {
             <Show when={showSecurity()}>
               <div class="p-4 space-y-4 bg-white">
                 {/* API Key Authentication */}
-                <div class="border-l-4 border-blue-500 pl-4">
+                <div class="border-l-4 border-primary-500 pl-4">
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={requireApiKey()}
                       onChange={(e) => setRequireApiKey(e.currentTarget.checked)}
-                      class="w-4 h-4 text-blue-600 border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+                      class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-2 focus:ring-primary-500"
                     />
                     <div class="flex items-center space-x-2">
-                      <FiLock class="w-4 h-4 text-blue-600" />
+                      <FiLock class="w-4 h-4 text-primary-600" />
                       <span class="text-sm font-medium text-slate-700">Require API Key</span>
                     </div>
                   </label>
@@ -159,7 +159,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
                           value={apiKey()}
                           onInput={(e) => setApiKey(e.currentTarget.value)}
                           placeholder="Enter or generate API key"
-                          class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-mono"
+                          class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none font-mono"
                         />
                         <button
                           type="button"
@@ -175,7 +175,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
                       <button
                         type="button"
                         onClick={generateApiKey}
-                        class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium"
+                        class="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
                       >
                         Generate
                       </button>
@@ -241,7 +241,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
             <button
               type="submit"
               disabled={loading()}
-              class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-primary-600 hover:to-secondary-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading() ? "Saving..." : "Save Changes"}
             </button>
