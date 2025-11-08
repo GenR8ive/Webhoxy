@@ -46,3 +46,45 @@ export interface MappingCreateRequest {
   fixed_value?: string | null;
 }
 
+export interface User {
+  id: number;
+  username: string;
+  password_hash: string;
+  must_change_password: number;
+  is_active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Activity {
+  id: number;
+  user_id: number;
+  activity_type: string;
+  description: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  metadata: string | null;
+  created_at: string;
+}
+
+export interface RefreshToken {
+  id: number;
+  user_id: number;
+  token: string;
+  expires_at: string;
+  created_at: string;
+}
+
+export type ActivityType = 
+  | 'user_created'
+  | 'user_updated'
+  | 'logged_in'
+  | 'logged_out'
+  | 'password_changed'
+  | 'webhook_created'
+  | 'webhook_updated'
+  | 'webhook_deleted'
+  | 'mapping_created'
+  | 'mapping_updated'
+  | 'mapping_deleted';
+

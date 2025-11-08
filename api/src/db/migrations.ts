@@ -93,6 +93,68 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_webhooks_api_key ON webhooks(api_key);
     `,
   },
+  {
+    id: 5,
+    name: 'create_users_table',
+    sql: `
+      -- Create users table
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        must_change_password INTEGER NOT NULL DEFAULT 0,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      
+      -- Create index for username lookups
+      CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+    `,
+  },
+  {
+    id: 6,
+    name: 'create_activities_table',
+    sql: `
+      -- Create activities table for audit logging
+      CREATE TABLE IF NOT EXISTS activities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        activity_type TEXT NOT NULL,
+        description TEXT NOT NULL,
+        ip_address TEXT,
+        user_agent TEXT,
+        metadata TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+      
+      -- Create indexes for better performance
+      CREATE INDEX IF NOT EXISTS idx_activities_user_id ON activities(user_id);
+      CREATE INDEX IF NOT EXISTS idx_activities_type ON activities(activity_type);
+      CREATE INDEX IF NOT EXISTS idx_activities_created_at ON activities(created_at);
+    `,
+  },
+  {
+    id: 7,
+    name: 'create_refresh_tokens_table',
+    sql: `
+      -- Create refresh_tokens table
+      CREATE TABLE IF NOT EXISTS refresh_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token TEXT NOT NULL UNIQUE,
+        expires_at TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+      
+      -- Create indexes for better performance
+      CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+      CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+      CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {
