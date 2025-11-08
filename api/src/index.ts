@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import sensible from '@fastify/sensible';
+import jwt from '@fastify/jwt';
+import bcrypt from 'bcrypt';
 import { config } from './config/index.js';
 import { initDatabase } from './db/index.js'; 
 import { webhookRoutes } from './routes/webhooks.js';
@@ -8,7 +10,10 @@ import { mappingRoutes } from './routes/mappings.js';
 import { logRoutes } from './routes/logs.js';
 import { fieldRoutes } from './routes/fields.js';
 import { adminRoutes } from './routes/admin.js';
+import { authRoutes } from './routes/auth.js';
+import { activityRoutes } from './routes/activities.js';
 import { createLogCleanupService } from './services/log-cleanup.js';
+import { createActivityTracker } from './services/activity-tracker.js';
 
 const fastify = Fastify({
   logger: {
@@ -32,10 +37,42 @@ await fastify.register(cors, {
   origin: config.corsOrigin === '*' ? true : config.corsOrigin.split(','),
   credentials: true,
 });
+await fastify.register(jwt, {
+  secret: config.jwtSecret,
+});
 
 // Initialize database
 const db = await initDatabase(config.databaseUrl);
 fastify.decorate('db', db);
+
+// Initialize activity tracker
+const activityTracker = createActivityTracker(db);
+fastify.decorate('activityTracker', activityTracker);
+
+// Create default admin user if no users exist
+const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
+if (userCount.count === 0) {
+  fastify.log.info('No users found. Creating default admin user...');
+  const defaultPassword = 'admin';
+  const passwordHash = await bcrypt.hash(defaultPassword, 10);
+  
+  const result = db.prepare(`
+    INSERT INTO users (username, password_hash, must_change_password, is_active)
+    VALUES (?, ?, 1, 1)
+  `).run('admin', passwordHash);
+  
+  const adminId = result.lastInsertRowid as number;
+  
+  // Log the user creation activity
+  activityTracker.logActivity({
+    userId: adminId,
+    activityType: 'user_created',
+    description: 'Default admin user created',
+  });
+  
+  fastify.log.info('✓ Default admin user created (username: admin, password: admin)');
+  fastify.log.warn('⚠️  IMPORTANT: Please change the admin password immediately after first login!');
+}
 
 // Initialize log cleanup service
 const logCleanupService = createLogCleanupService(
@@ -58,6 +95,8 @@ fastify.get('/', async () => {
 });
 
 // Register API routes
+await fastify.register(authRoutes, { prefix: '/api' });
+await fastify.register(activityRoutes, { prefix: '/api' });
 await fastify.register(webhookRoutes, { prefix: '/api' });
 await fastify.register(mappingRoutes, { prefix: '/api' });
 await fastify.register(logRoutes, { prefix: '/api' });

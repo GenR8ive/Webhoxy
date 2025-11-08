@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { extractFieldsWithInfo, type FieldInfo } from '../utils/field-extractor.js';
+import { authenticateUser, requirePasswordChange } from '../middleware/auth.js';
 
 const webhookIdParamsSchema = z.object({
   webhook_id: z.coerce.number(),
@@ -15,6 +16,9 @@ export async function fieldRoutes(fastify: FastifyInstance) {
     Reply: { fields: FieldInfo[] }
   }>(
     '/fields/:webhook_id/stored',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request) => {
       const { webhook_id } = webhookIdParamsSchema.parse(request.params);
       
@@ -40,6 +44,9 @@ export async function fieldRoutes(fastify: FastifyInstance) {
     Reply: { fields: FieldInfo[] } | { error: string } 
   }>(
     '/fields/:webhook_id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const { webhook_id } = webhookIdParamsSchema.parse(request.params);
       
@@ -95,6 +102,9 @@ export async function fieldRoutes(fastify: FastifyInstance) {
     Reply: { success: boolean } 
   }>(
     '/fields/:webhook_id/custom',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request) => {
       const { webhook_id } = webhookIdParamsSchema.parse(request.params);
       const { field_path } = request.body;
@@ -117,6 +127,9 @@ export async function fieldRoutes(fastify: FastifyInstance) {
     Reply: { fields: FieldInfo[] } 
   }>(
     '/fields/extract',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request) => {
       const { payload } = request.body;
       const fields = extractFieldsWithInfo(payload);

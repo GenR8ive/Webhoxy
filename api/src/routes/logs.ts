@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import type { Log } from '../db/types.js';
+import { authenticateUser, requirePasswordChange } from '../middleware/auth.js';
 
 const webhookIdParamsSchema = z.object({
   webhook_id: z.coerce.number(),
@@ -18,6 +19,9 @@ export async function logRoutes(fastify: FastifyInstance) {
     Reply: { logs: Log[]; total: number; page: number; limit: number; totalPages: number }
   }>(
     '/logs',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request) => {
       const { page, limit } = paginationQuerySchema.parse(request.query);
       const offset = (page - 1) * limit;
@@ -50,6 +54,9 @@ export async function logRoutes(fastify: FastifyInstance) {
     Reply: { logs: Log[]; total: number; page: number; limit: number; totalPages: number }
   }>(
     '/logs/:webhook_id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request) => {
       const { webhook_id } = webhookIdParamsSchema.parse(request.params);
       const { page, limit } = paginationQuerySchema.parse(request.query);

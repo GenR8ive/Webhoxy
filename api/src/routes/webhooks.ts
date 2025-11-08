@@ -1,8 +1,9 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { Webhook, WebhookCreateRequest, WebhookResponse } from '../db/types.js';
+import type { Webhook, WebhookCreateRequest, WebhookResponse, User } from '../db/types.js';
 import { forwardWebhook } from '../services/forwarder.js';
 import { applyMappings } from '../utils/json-mapper.js';
+import { authenticateUser, requirePasswordChange } from '../middleware/auth.js';
 
 const createWebhookSchema = z.object({
   name: z.string().min(1),
@@ -27,18 +28,17 @@ const paginationQuerySchema = z.object({
   limit: z.coerce.number().min(1).max(100).default(10),
 });
 
-declare module 'fastify' {
-  interface FastifyInstance {
-    db: any;
-  }
-}
 
 export async function webhookRoutes(fastify: FastifyInstance) {
   // Create webhook
   fastify.post<{ Body: WebhookCreateRequest; Reply: WebhookResponse }>(
     '/webhooks',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const body = createWebhookSchema.parse(request.body);
+      const user = request.user! as User;
       
       try {
         const stmt = fastify.db.prepare(`
@@ -57,6 +57,16 @@ export async function webhookRoutes(fastify: FastifyInstance) {
         );
         const webhookId = result.lastInsertRowid as number;
         
+        // Log activity
+        fastify.activityTracker.logActivity({
+          userId: user.id,
+          activityType: 'webhook_created',
+          description: `Created webhook: ${body.name}`,
+          ipAddress: request.ip,
+          userAgent: request.headers['user-agent'],
+          metadata: { webhookId, webhookName: body.name },
+        });
+        
         const proxyUrl = `http://localhost:${process.env.PORT || 8080}/hook/${webhookId}`;
         
         return { id: webhookId, proxy_url: proxyUrl };
@@ -73,7 +83,9 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   fastify.get<{ 
     Querystring: { page?: number; limit?: number }; 
     Reply: { webhooks: Webhook[]; total: number; page: number; limit: number; totalPages: number } 
-  }>('/webhooks', async (request) => {
+  }>('/webhooks', {
+    preHandler: [authenticateUser, requirePasswordChange],
+  }, async (request) => {
     const { page, limit } = paginationQuerySchema.parse(request.query);
     const offset = (page - 1) * limit;
     
@@ -100,6 +112,9 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   // Get webhook by ID
   fastify.get<{ Params: { id: number }; Reply: Webhook }>(
     '/webhooks/:id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const { id } = webhookParamsSchema.parse(request.params);
       
@@ -118,9 +133,13 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   // Update webhook
   fastify.patch<{ Params: { id: number }; Body: Partial<WebhookCreateRequest> }>(
     '/webhooks/:id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const { id } = webhookParamsSchema.parse(request.params);
       const body = createWebhookSchema.partial().parse(request.body);
+      const user = request.user! as User;
       
       // Check if webhook exists
       const existing = fastify.db
@@ -173,6 +192,16 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       const sql = `UPDATE webhooks SET ${updates.join(', ')} WHERE id = ?`;
       fastify.db.prepare(sql).run(...values);
       
+      // Log activity
+      fastify.activityTracker.logActivity({
+        userId: user.id,
+        activityType: 'webhook_updated',
+        description: `Updated webhook: ${existing.name}`,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+        metadata: { webhookId: id, webhookName: existing.name },
+      });
+      
       // Return updated webhook
       const updated = fastify.db
         .prepare('SELECT * FROM webhooks WHERE id = ?')
@@ -185,8 +214,21 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   // Delete webhook
   fastify.delete<{ Params: { id: number } }>(
     '/webhooks/:id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const { id } = webhookParamsSchema.parse(request.params);
+      const user = request.user! as User;
+      
+      // Get webhook name before deletion
+      const webhook = fastify.db
+        .prepare('SELECT * FROM webhooks WHERE id = ?')
+        .get(id) as Webhook | undefined;
+      
+      if (!webhook) {
+        return reply.notFound('Webhook not found');
+      }
       
       const result = fastify.db
         .prepare('DELETE FROM webhooks WHERE id = ?')
@@ -195,6 +237,16 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       if (result.changes === 0) {
         return reply.notFound('Webhook not found');
       }
+      
+      // Log activity
+      fastify.activityTracker.logActivity({
+        userId: user.id,
+        activityType: 'webhook_deleted',
+        description: `Deleted webhook: ${webhook.name}`,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+        metadata: { webhookId: id, webhookName: webhook.name },
+      });
       
       reply.code(204).send();
     }

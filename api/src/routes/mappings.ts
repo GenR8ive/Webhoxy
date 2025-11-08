@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import type { Mapping, MappingCreateRequest } from '../db/types.js';
+import type { Mapping, MappingCreateRequest, User } from '../db/types.js';
+import { authenticateUser, requirePasswordChange } from '../middleware/auth.js';
 
 const createMappingSchema = z.object({
   webhook_id: z.number(),
@@ -21,8 +22,12 @@ export async function mappingRoutes(fastify: FastifyInstance) {
   // Create mapping
   fastify.post<{ Body: MappingCreateRequest; Reply: Mapping }>(
     '/mappings',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const body = createMappingSchema.parse(request.body);
+      const user = request.user! as User;
       
       // Check if webhook exists
       const webhook = fastify.db
@@ -51,6 +56,16 @@ export async function mappingRoutes(fastify: FastifyInstance) {
         .prepare('SELECT * FROM mappings WHERE id = ?')
         .get(mappingId) as Mapping;
       
+      // Log activity
+      fastify.activityTracker.logActivity({
+        userId: user.id,
+        activityType: 'mapping_created',
+        description: `Created mapping: ${body.source_field} -> ${body.target_field}`,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+        metadata: { mappingId, webhookId: body.webhook_id },
+      });
+      
       return mapping;
     }
   );
@@ -58,6 +73,9 @@ export async function mappingRoutes(fastify: FastifyInstance) {
   // Get mappings for webhook
   fastify.get<{ Params: { webhook_id: number }; Reply: Mapping[] }>(
     '/mappings/:webhook_id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request) => {
       const { webhook_id } = webhookIdParamsSchema.parse(request.params);
       
@@ -72,8 +90,21 @@ export async function mappingRoutes(fastify: FastifyInstance) {
   // Delete mapping
   fastify.delete<{ Params: { mapping_id: number } }>(
     '/mappings/:mapping_id',
+    {
+      preHandler: [authenticateUser, requirePasswordChange],
+    },
     async (request, reply) => {
       const { mapping_id } = mappingIdParamsSchema.parse(request.params);
+      const user = request.user! as User;
+      
+      // Get mapping details before deletion
+      const mapping = fastify.db
+        .prepare('SELECT * FROM mappings WHERE id = ?')
+        .get(mapping_id) as Mapping | undefined;
+      
+      if (!mapping) {
+        return reply.notFound('Mapping not found');
+      }
       
       const result = fastify.db
         .prepare('DELETE FROM mappings WHERE id = ?')
@@ -82,6 +113,16 @@ export async function mappingRoutes(fastify: FastifyInstance) {
       if (result.changes === 0) {
         return reply.notFound('Mapping not found');
       }
+      
+      // Log activity
+      fastify.activityTracker.logActivity({
+        userId: user.id,
+        activityType: 'mapping_deleted',
+        description: `Deleted mapping: ${mapping.source_field} -> ${mapping.target_field}`,
+        ipAddress: request.ip,
+        userAgent: request.headers['user-agent'],
+        metadata: { mappingId: mapping_id, webhookId: mapping.webhook_id },
+      });
       
       reply.code(204).send();
     }

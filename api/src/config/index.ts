@@ -23,6 +23,12 @@ const configSchema = z.object({
   logRetentionDays: z.coerce.number().min(1).max(365).default(7), // Keep logs for 7 days by default
   logCleanupIntervalHours: z.coerce.number().min(1).max(168).default(24), // Run cleanup every 24 hours
   
+  // Activity Retention
+  activityRetentionDays: z.coerce.number().min(1).max(365).default(90), // Keep activities for 90 days by default
+  
+  // Authentication
+  jwtSecret: z.string().min(32).default('change-this-secret-in-production-min-32-chars-long'),
+  
   // Application
   appName: z.string().default('Webhoxy'),
   appVersion: z.string().default('0.1.0'),
@@ -40,6 +46,8 @@ export const config: Config = configSchema.parse({
   logPretty: process.env.LOG_PRETTY,
   logRetentionDays: process.env.LOG_RETENTION_DAYS,
   logCleanupIntervalHours: process.env.LOG_CLEANUP_INTERVAL_HOURS,
+  activityRetentionDays: process.env.ACTIVITY_RETENTION_DAYS,
+  jwtSecret: process.env.JWT_SECRET,
   appName: process.env.APP_NAME,
   appVersion: process.env.APP_VERSION,
 });
