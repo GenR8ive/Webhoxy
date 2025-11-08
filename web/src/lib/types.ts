@@ -84,4 +84,39 @@ export interface FieldsResponse {
   fields: FieldInfo[];
 }
 
+// Auth types
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  mustChangePassword: boolean;
+  user: {
+    id: number;
+    username: string;
+  };
+}
+
+export interface User {
+  id: number;
+  username: string;
+  mustChangePassword: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  expiresIn: number;
+  mustChangePassword: boolean;
+}
+
 
