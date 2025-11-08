@@ -47,8 +47,7 @@ services:
       - APP_VERSION=${APP_VERSION:-0.1.0}
       - PUBLIC_URL=${PUBLIC_URL:-http://localhost}
     volumes:
-      - ./api/data:/app/data
-    command: sh -c "chmod -R 777 /app/data && node dist/index.js"
+      - webhoxy-data:/app/data
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "sh", "-c", "wget --no-verbose --tries=1 --spider http://127.0.0.1:$${PORT:-8080}/ || exit 1"]
