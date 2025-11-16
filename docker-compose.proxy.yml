@@ -1,0 +1,16 @@
+services:
+  proxy:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "${PROXY_PORT:-80}:80"
+      - "${PROXY_SSL_PORT:-443}:443"
+    depends_on:
+      - api
+      - web
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    networks:
+      - webhoxy-network
+    restart: unless-stopped

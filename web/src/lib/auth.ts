@@ -2,7 +2,7 @@ import { createSignal } from "solid-js";
 import axios from "axios";
 import type { LoginRequest, LoginResponse, User, RefreshTokenRequest, RefreshTokenResponse } from "./types";
 
-const API_BASE_URL = "/api";
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 const TOKEN_KEY = "webhoxy_access_token";
 const REFRESH_TOKEN_KEY = "webhoxy_refresh_token";
 
@@ -85,25 +85,13 @@ export async function login(credentials: LoginRequest): Promise<LoginResponse> {
 
   // Update state
   setIsAuthenticated(true);
-  
-  // Get full user info to get createdAt/updatedAt
-  try {
-    const userResponse = await authApi.get<User>("/auth/me", {
-      headers: {
-        Authorization: `Bearer ${data.accessToken}`,
-      },
-    });
-    setUser(userResponse.data);
-  } catch (err) {
-    // If we can't get user info, set basic info
-    setUser({
-      id: data.user.id,
-      username: data.user.username,
-      mustChangePassword: data.mustChangePassword,
-      createdAt: "",
-      updatedAt: "",
-    });
-  }
+  setUser({
+    id: data.user.id,
+    username: data.user.username,
+    mustChangePassword: data.mustChangePassword,
+    createdAt: "",
+    updatedAt: "",
+  });
 
   return data;
 }
@@ -152,32 +140,17 @@ async function refreshAccessToken(refreshToken: string): Promise<boolean> {
   }
 }
 
-// Change password
-export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
-  const token = getAccessToken();
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  await authApi.post(
-    "/auth/change-password",
-    { currentPassword, newPassword },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
-
-  // After password change, refresh tokens are invalidated
-  // But the access token is still valid, so we can refresh user info
-  // This will update mustChangePassword to false
-  await checkAuth();
-}
-
 // Get access token
 export function getAccessToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
+}
+
+// Change password
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await authApi.post("/auth/change-password", {
+    currentPassword,
+    newPassword,
+  });
 }
 
 // Export auth state

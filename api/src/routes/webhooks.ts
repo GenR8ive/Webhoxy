@@ -67,7 +67,7 @@ export async function webhookRoutes(fastify: FastifyInstance) {
           metadata: { webhookId, webhookName: body.name },
         });
         
-        const proxyUrl = `http://localhost:${process.env.PORT || 8080}/hook/${webhookId}`;
+        const proxyUrl = `${process.env.PUBLIC_URL}/hook/${webhookId}`;
         
         return { id: webhookId, proxy_url: proxyUrl };
       } catch (error: any) {
