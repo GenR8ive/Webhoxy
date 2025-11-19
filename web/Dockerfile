@@ -7,6 +7,12 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+
+ARG VITE_WEBHOOK_URL
+ENV VITE_WEBHOOK_URL=$VITE_WEBHOOK_URL
+
 RUN npm install
 
 # Copy source files

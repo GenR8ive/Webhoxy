@@ -2,86 +2,71 @@
 
 This guide covers different ways to run Webhoxy for development purposes.
 
-## Three Development Modes
+## Development Scenarios
 
-### 1. Full Stack with Proxy (Recommended for testing production setup)
+### Scenario 3: Local Dev (npm run dev)
+Run services individually for maximum control and faster feedback loops.
 
-Run all services together with the reverse proxy:
+1. **Setup API**:
+   ```bash
+   cd api
+   cp .env.example .env
+   npm install
+   npm run dev
+   ```
+   *Runs on port 8080*
 
+2. **Setup Web**:
+   ```bash
+   cd web
+   cp .env.example .env
+   npm install
+   npm run dev
+   ```
+   *Runs on port 5173 (default)*
+
+3. **Access**:
+   - Web: `http://localhost:5173`
+   - API: `http://localhost:8080`
+
+### Scenario 4: Local Dev + External Proxy
+Run services locally but access them through a Dockerized Nginx proxy. This mimics production routing while keeping hot-reload.
+
+1. **Start Local Services**:
+   Follow steps in Scenario 3 to start API and Web.
+
+2. **Start Proxy**:
+   ```bash
+   # From root directory
+   docker-compose -f docker-compose.dev-proxy.yml up -d
+   ```
+   *This proxy is configured to forward traffic to `host.docker.internal`.*
+
+3. **Configure Web (Optional)**:
+   To make the UI display the proxy URL:
+   - Edit `web/.env`:
+     ```env
+     VITE_WEBHOOK_URL=http://localhost/webhook
+     ```
+
+4. **Access**:
+   - App: `http://localhost` (Routes to your local running Web)
+   - API: `http://localhost/api` (Routes to your local running API)
+
+---
+
+### Docker Development
+If you prefer developing entirely within Docker:
+
+**Run Web + API (No Proxy)**:
 ```bash
-# Start all services (proxy, api, web)
 docker-compose up
-
-# Or in detached mode
-docker-compose up -d
-
-# View logs
-docker-compose logs -f
-
-# Access:
-# - Frontend: http://localhost/
-# - API: http://localhost/api/
-# - Health: http://localhost/health
 ```
 
-**Use this when:**
-- Testing the full production setup locally
-- Testing webhook endpoints with proper routing
-- Verifying proxy configuration
-
----
-
-### 2. Services Without Proxy (Development Mode)
-
-Run API and Web independently without the proxy:
-
+**Run Web + API + Proxy**:
 ```bash
-# Start API and Web (no proxy)
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
-
-# Or specific service only
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up api
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up web
-
-# Access:
-# - API: http://localhost:8080/
-# - Web: http://localhost:3000/
+docker-compose -f docker-compose.yml -f docker-compose.proxy.yml up
 ```
-
-**Use this when:**
-- Developing API features
-- Developing frontend features
-- Don't need the full proxy setup
-- Want faster startup times
-
----
-
-### 3. Individual Services (Maximum Flexibility)
-
-Run just one service at a time:
-
-#### API Only
-
-```bash
-# Start just the API
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up api
-
-# Access: http://localhost:8080/
-```
-
-#### Web Only
-
-```bash
-# Start just the Web frontend
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up web
-
-# Access: http://localhost:3000/
-```
-
-**Use this when:**
-- Working on a specific service
-- Need minimal resource usage
-- Debugging a single component
 
 ---
 

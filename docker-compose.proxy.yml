@@ -14,3 +14,9 @@ services:
     networks:
       - webhoxy-network
     restart: unless-stopped
+
+  web:
+    build:
+      context: ./web
+      args:
+        VITE_WEBHOOK_URL: http://${DOMAIN:-localhost}/webhook

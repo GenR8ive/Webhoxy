@@ -121,13 +121,26 @@ function WebhookList(props: WebhookListProps) {
                             <FiExternalLink class="w-3 h-3 flex-shrink-0" />
                           </a>
                         </div>
-                        <div class="flex items-center space-x-2">
+                          <div class="flex items-center space-x-2">
                           <span class="text-slate-500">Proxy URL:</span>
                           <code class="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700 font-mono">
-                            {window.location.origin}/api/hook/{webhook.id}
+                            {(() => {
+                              const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/webhooks/receive`;
+                              // Remove trailing slash if present to avoid double slashes
+                              const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+                              return `${cleanBaseUrl}/${webhook.id}`;
+                            })()}
                           </code>
                           <button
-                            onClick={() => copyProxyUrl(webhook.id)}
+                            onClick={() => {
+                              const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/webhooks/receive`;
+                              const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+                              const url = `${cleanBaseUrl}/${webhook.id}`;
+                              navigator.clipboard.writeText(url).then(() => {
+                                setCopiedId(webhook.id);
+                                setTimeout(() => setCopiedId(null), 2000);
+                              });
+                            }}
                             class="text-slate-500 hover:text-primary-600 transition-colors"
                             title="Copy proxy URL"
                           >

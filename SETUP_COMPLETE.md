@@ -29,15 +29,25 @@ Your Webhoxy application now has a **centralized reverse proxy** that makes it e
    - `PROXY_SETUP.md` - Reverse proxy reference
    - `docker-compose.prod.yml` - Production overrides
 
-## Current Status
+## Supported Scenarios
 
-All services are **running and healthy**:
+We have successfully configured Webhoxy to support 4 distinct workflows:
 
-```
-✅ webhoxy-proxy  (nginx reverse proxy)  - Port 80/443
-✅ webhoxy-api    (backend API)          - Internal only
-✅ webhoxy-web    (frontend SPA)         - Internal only
-```
+1. **Docker (Web + API)**:
+   - Run: `docker-compose up`
+   - Direct access to containers on ports 80 and 8080.
+
+2. **Docker (Web + API + Proxy)**:
+   - Run: `docker-compose -f docker-compose.yml -f docker-compose.proxy.yml up`
+   - Single entry point via Nginx on port 80.
+
+3. **Local Dev (npm run dev)**:
+   - Run: `npm run dev` in both `api` and `web` folders.
+   - Fast hot-reload development.
+
+4. **Local Dev + External Proxy**:
+   - Run: `npm run dev` in folders + `docker-compose -f docker-compose.dev-proxy.yml up`.
+   - Develop locally but test with production-like routing.
 
 ## Access Your Application
 

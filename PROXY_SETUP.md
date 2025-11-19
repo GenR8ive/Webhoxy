@@ -84,35 +84,51 @@ PROXY_SSL_PORT=443   # HTTPS port (for SSL)
 CORS_ORIGIN=http://localhost
 ```
 
-### Local Development
+### Local Development Proxy
+For Scenario 4 (npm run dev + Proxy), we use a special configuration:
 
 ```bash
-# Use localhost
+docker-compose -f docker-compose.dev-proxy.yml up
+```
+
+This uses `nginx/dev-proxy.conf.template` which points to `host.docker.internal`, allowing the Dockerized Nginx to talk to your locally running Node.js processes.
+
+### Production Proxy
+For Scenario 2 (Docker + Proxy), we use the standard configuration:
+
+```bash
+docker-compose -f docker-compose.yml -f docker-compose.proxy.yml up
+```
+
+This uses `nginx/nginx.conf` which points to the Docker service names (`webhoxy-api`, `webhoxy-web`).
+
+---
+
+## Configuration
+
+### Environment Variables (.env)
+
+The key configuration variables for the proxy:
+
+```env
+# Your domain (used in nginx config)
 DOMAIN=localhost
+
+# Full public URL (used by the app to generate webhook URLs)
 PUBLIC_URL=http://localhost
-PROXY_PORT=80
+
+# External ports
+PROXY_PORT=80        # HTTP port
+PROXY_SSL_PORT=443   # HTTPS port (for SSL)
+
+# CORS settings (should match your PUBLIC_URL)
+CORS_ORIGIN=http://localhost
 ```
 
-### Production Server
-
-```bash
-# Use your domain
-DOMAIN=webhoxy.example.com
-PUBLIC_URL=https://webhoxy.example.com
-PROXY_PORT=80
-PROXY_SSL_PORT=443
-CORS_ORIGIN=https://webhoxy.example.com
-```
-
-### Behind Another Proxy/CDN (e.g., Cloudflare)
-
-```bash
-# Use non-standard ports if needed
-DOMAIN=webhoxy.example.com
-PUBLIC_URL=https://webhoxy.example.com
-PROXY_PORT=8080      # Different port if 80 is taken
-CORS_ORIGIN=https://webhoxy.example.com
-```
+### Webhook URL Display
+The frontend needs to know the public URL to display for webhooks.
+- **Docker Proxy**: Automatically set via build args in `docker-compose.proxy.yml`.
+- **Local Dev**: Set `VITE_WEBHOOK_URL` in `web/.env`.
 
 ## Testing the Setup
 

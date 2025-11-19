@@ -32,6 +32,10 @@ export interface WebhookCreateRequest {
   name: string;
   description: string;
   target_url: string;
+  api_key: string | null;
+  allowed_ips: string | null;
+  require_api_key: number;
+  require_ip_whitelist: number;
 }
 
 export interface WebhookResponse {

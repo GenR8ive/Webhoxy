@@ -150,6 +150,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
   await authApi.post("/auth/change-password", {
     currentPassword,
     newPassword,
+  }, {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem(TOKEN_KEY)}`,
+    },
   });
 }
 

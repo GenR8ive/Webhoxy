@@ -29,6 +29,7 @@ export async function authenticateUser(
     // Attach full user to request (replacing JWT payload)
     request.user = user;
   } catch (err) {
+    console.log(err);
     return reply.status(401).send({
       error: 'Invalid or expired token',
       statusCode: 401,

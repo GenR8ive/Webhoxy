@@ -76,65 +76,11 @@
 - **Docker & Docker Compose** (recommended)
 - OR **Node.js 20+** and **npm 10+**
 
-### Option 1: Docker Compose (Recommended)
+### Scenario 1: Docker Compose (Web + API)
+*User sets ports and domains.*
 
-```bash
-# Clone the repository
-git clone https://github.com/GenR8ive/Webhoxy.git
-cd webhoxy
-
-# Start all services
-docker-compose up -d
-
-# Check service health
-docker-compose ps
-```
-
-**Access the application:**
-- **Web UI**: http://localhost:80 (or just http://localhost)
-- **API**: http://localhost:8080
-
-### Option 2: Manual Setup
-
-#### 1. Start the API
-
-```bash
-cd api
-
-# Install dependencies
-npm install
-
-# Copy environment file
-cp env.example .env
-
-# Start development server
-npm run dev
-
-# Or build for production
-npm run build
-npm start
-```
-
-#### 2. Start the Web UI
-
-```bash
-cd web
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Or build for production
-npm run build
-npm run serve
-```
-
----
-
-## 📚 Documentation
-
+1. Create a `.env` file in the root directory (copy from `env.example`).
+2. Adjust `API_PORT` and `WEB_PORT` in `.env` if needed.
 ### How It Works
 
 ```
@@ -272,10 +218,24 @@ curl -H "X-API-Key: your-api-key" http://localhost:8080/hook/1
 Restrict webhook access to specific IPs:
 
 ```
-192.168.1.100, 10.0.0.5, 172.16.0.0/24
-```
-
----
+276: 192.168.1.100, 10.0.0.5, 172.16.0.0/24
+277: ```
+278: 
+279: ### Password Recovery
+280: 
+281: Since Webhoxy does not use email, password recovery is handled via a server-side script. An administrator can reset any user's password:
+282: 
+283: ```bash
+284: # Usage: node scripts/reset-password.js <username> <new_password>
+285: node scripts/reset-password.js admin newSecretPassword123
+286: ```
+287: 
+288: This will:
+289: 1. Reset the password
+290: 2. Invalidate all existing sessions
+291: 3. Require the user to change their password upon next login
+292: 
+293: ---
 
 ## 🐳 Docker Details
 

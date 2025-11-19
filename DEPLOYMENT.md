@@ -15,66 +15,90 @@ Internet → Reverse Proxy (nginx) → API Service (Node.js/Fastify)
 2. **API Service** - Backend REST API for webhook management
 3. **Web Service** - Frontend SPA for UI
 
-## Quick Start
+## Deployment Scenarios
 
-### 1. Local Development
+Webhoxy supports two main Docker deployment strategies:
+
+### Scenario 1: Web + API (No Proxy)
+Best for simple deployments where you want to expose services directly or use your own external load balancer.
+
+1. **Configure Environment**:
+   ```bash
+   cp env.example .env
+   ```
+   Edit `.env`:
+   ```env
+   API_PORT=8080
+   WEB_PORT=80
+   # Ensure these ports are open and not in use
+   ```
+
+2. **Run**:
+   ```bash
+   docker-compose up -d
+   ```
+
+3. **Access**:
+   - Web: `http://your-server:80`
+   - API: `http://your-server:8080`
+
+### Scenario 2: Web + API + Proxy (Recommended)
+Best for production. The Nginx proxy handles routing, SSL (optional), and provides a single entry point.
+
+1. **Configure Environment**:
+   ```bash
+   cp env.example .env
+   ```
+   Edit `.env`:
+   ```env
+   DOMAIN=your-domain.com
+   PROXY_PORT=80
+   
+   # IMPORTANT: Change WEB_PORT to avoid conflict with PROXY_PORT if on same host
+   WEB_PORT=3000 
+   API_PORT=8080
+   ```
+
+2. **Run**:
+   ```bash
+   docker-compose -f docker-compose.yml -f docker-compose.proxy.yml up -d --build
+   ```
+
+3. **Access**:
+   - Main: `http://your-domain.com` (Routes to Web)
+   - API: `http://your-domain.com/api`
+   - Webhooks: `http://your-domain.com/webhook/...`
+
+---
+
+## Production Deployment Steps
+
+### 1. Prepare Server
+Ensure Docker and Docker Compose are installed.
+
+### 2. Environment Setup
+Create your production `.env` file:
 
 ```bash
-# Copy environment template
 cp env.example .env
-
-# Start all services
-docker-compose up --build
-
-# Access the application
-# Frontend: http://localhost
-# API: http://localhost/api
-# Webhooks: http://localhost/webhook/{webhook-id}
+nano .env
 ```
 
-### 2. Production Deployment
+**Critical Variables:**
+- `DOMAIN`: Your actual domain name
+- `PUBLIC_URL`: Full URL (e.g., `https://example.com`)
+- `NODE_ENV`: Set to `production`
+- `WEBHOOK_URL`: (Optional) Explicitly set the webhook base URL if needed
 
-#### Step 1: Configure Environment
-
-Create a `.env` file from the template:
-
+### 3. Deploy
 ```bash
-cp env.example .env
+# For Proxy Setup (Recommended)
+docker-compose -f docker-compose.yml -f docker-compose.proxy.yml up -d --build
 ```
 
-Edit `.env` with your production values:
-
-```env
-# Your domain name
-DOMAIN=webhoxy.yourdomain.com
-PUBLIC_URL=https://webhoxy.yourdomain.com
-
-# Ports (use 80/443 for production)
-PROXY_PORT=80
-PROXY_SSL_PORT=443
-
-# API Configuration
-NODE_ENV=production
-LOG_LEVEL=info
-LOG_PRETTY=false
-
-# CORS (add your domains)
-CORS_ORIGIN=https://webhoxy.yourdomain.com
-```
-
-#### Step 2: Deploy
-
+### 4. Verify
 ```bash
-# Pull latest changes
-git pull
-
-# Rebuild and start services
-docker-compose up --build -d
-
-# Check status
 docker-compose ps
-
-# View logs
 docker-compose logs -f
 ```
 
