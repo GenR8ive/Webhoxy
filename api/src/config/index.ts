@@ -32,11 +32,14 @@ const configSchema = z.object({
   // Application
   appName: z.string().default('Webhoxy'),
   appVersion: z.string().default('0.1.0'),
+  
+  // Public URL (for webhooks)
+  publicUrl: z.string().optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;
 
-export const config: Config = configSchema.parse({
+const parsed = configSchema.parse({
   port: process.env.PORT,
   host: process.env.HOST,
   nodeEnv: process.env.NODE_ENV,
@@ -50,5 +53,10 @@ export const config: Config = configSchema.parse({
   jwtSecret: process.env.JWT_SECRET,
   appName: process.env.APP_NAME,
   appVersion: process.env.APP_VERSION,
+  publicUrl: process.env.PUBLIC_URL,
 });
 
+export const config = {
+  ...parsed,
+  publicUrl: parsed.publicUrl?.replace(/\/$/, '') || `http://localhost:${parsed.port}/api`,
+};

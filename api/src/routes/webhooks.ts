@@ -4,6 +4,7 @@ import type { Webhook, WebhookCreateRequest, WebhookResponse, User } from '../db
 import { forwardWebhook } from '../services/forwarder.js';
 import { applyMappings } from '../utils/json-mapper.js';
 import { authenticateUser, requirePasswordChange } from '../middleware/auth.js';
+import { config } from '../config/index.js';
 
 const createWebhookSchema = z.object({
   name: z.string().min(1),
@@ -67,7 +68,9 @@ export async function webhookRoutes(fastify: FastifyInstance) {
           metadata: { webhookId, webhookName: body.name },
         });
         
-        const proxyUrl = `${process.env.PUBLIC_URL}/hook/${webhookId}`;
+        // Ensure publicUrl doesn't have a trailing slash
+        const baseUrl = config.publicUrl.endsWith('/') ? config.publicUrl.slice(0, -1) : config.publicUrl;
+        const proxyUrl = `${baseUrl}/hook/${webhookId}`;
         
         return { id: webhookId, proxy_url: proxyUrl };
       } catch (error: any) {
