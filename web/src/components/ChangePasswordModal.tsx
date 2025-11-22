@@ -83,7 +83,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
 
   return (
     <div 
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
       role="dialog"
@@ -91,13 +91,13 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
       aria-labelledby="change-password-title"
     >
       <div 
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-md border border-slate-200"
+        class="glass-card rounded-2xl w-full max-w-md overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div class="bg-gradient-to-r from-primary-500 to-secondary-500 px-6 py-4 rounded-t-2xl">
+        <div class="bg-gradient-to-r from-primary-600/80 to-secondary-600/80 px-6 py-4 border-b border-white/10">
           <div class="flex items-center space-x-3">
-            <div class="w-10 h-10 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
+            <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
               <FiLock class="w-5 h-5 text-white" />
             </div>
             <div>
@@ -112,7 +112,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
           <form onSubmit={handleSubmit} class="space-y-4">
             {/* Error Message */}
             <Show when={error()}>
-              <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start space-x-2">
+              <div class="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-start space-x-2">
                 <FiAlertCircle class="w-5 h-5 mt-0.5 flex-shrink-0" />
                 <span class="text-sm">{error()}</span>
               </div>
@@ -120,12 +120,12 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
 
             {/* Current Password */}
             <div>
-              <label for="current-password" class="block text-sm font-medium text-slate-700 mb-2">
+              <label for="current-password" class="block text-sm font-medium text-slate-300 mb-2">
                 Current Password
               </label>
-              <div class="relative">
+              <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock class="w-5 h-5 text-slate-400" />
+                  <FiLock class="w-5 h-5 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
                 </div>
                 <input
                   id="current-password"
@@ -133,14 +133,14 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                   required
                   value={currentPassword()}
                   onInput={(e) => setCurrentPassword(e.currentTarget.value)}
-                  class="block w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+                  class="block w-full pl-10 pr-10 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
                   placeholder="Enter current password"
                   disabled={isLoading()}
                 />
                 <button
                   type="button"
                   onClick={() => setShowCurrentPassword(!showCurrentPassword())}
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   {showCurrentPassword() ? (
                     <FiEyeOff class="w-5 h-5" />
@@ -153,12 +153,12 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
 
             {/* New Password */}
             <div>
-              <label for="new-password" class="block text-sm font-medium text-slate-700 mb-2">
+              <label for="new-password" class="block text-sm font-medium text-slate-300 mb-2">
                 New Password
               </label>
-              <div class="relative">
+              <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock class="w-5 h-5 text-slate-400" />
+                  <FiLock class="w-5 h-5 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
                 </div>
                 <input
                   id="new-password"
@@ -166,7 +166,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                   required
                   value={newPassword()}
                   onInput={(e) => setNewPassword(e.currentTarget.value)}
-                  class="block w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+                  class="block w-full pl-10 pr-10 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
                   placeholder="Enter new password (min 8 characters)"
                   disabled={isLoading()}
                   minLength={8}
@@ -174,7 +174,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword())}
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   {showNewPassword() ? (
                     <FiEyeOff class="w-5 h-5" />
@@ -188,12 +188,12 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
 
             {/* Confirm Password */}
             <div>
-              <label for="confirm-password" class="block text-sm font-medium text-slate-700 mb-2">
+              <label for="confirm-password" class="block text-sm font-medium text-slate-300 mb-2">
                 Confirm New Password
               </label>
-              <div class="relative">
+              <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock class="w-5 h-5 text-slate-400" />
+                  <FiLock class="w-5 h-5 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
                 </div>
                 <input
                   id="confirm-password"
@@ -201,14 +201,14 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
                   required
                   value={confirmPassword()}
                   onInput={(e) => setConfirmPassword(e.currentTarget.value)}
-                  class="block w-full pl-10 pr-10 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+                  class="block w-full pl-10 pr-10 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
                   placeholder="Confirm new password"
                   disabled={isLoading()}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword())}
-                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   {showConfirmPassword() ? (
                     <FiEyeOff class="w-5 h-5" />
@@ -223,7 +223,7 @@ function ChangePasswordModal(props: ChangePasswordModalProps) {
             <button
               type="submit"
               disabled={isLoading()}
-              class="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 px-4 rounded-lg font-medium hover:from-primary-600 hover:to-secondary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              class="w-full btn-primary text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading() ? "Changing Password..." : "Change Password"}
             </button>

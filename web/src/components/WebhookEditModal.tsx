@@ -57,16 +57,16 @@ function WebhookEditModal(props: WebhookEditModalProps) {
   };
 
   return (
-    <div class="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={props.onClose}>
-      <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={props.onClose}>
+      <div class="glass-card rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
-        <div class="flex items-center justify-between p-6 border-b border-slate-200">
-          <h2 class="text-2xl font-bold text-slate-800">Edit Webhook</h2>
+        <div class="flex items-center justify-between p-6 border-b border-white/10">
+          <h2 class="text-2xl font-bold text-white">Edit Webhook</h2>
           <button
             onClick={props.onClose}
-            class="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+            class="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <FiX class="w-6 h-6 text-slate-500" />
+            <FiX class="w-6 h-6 text-slate-400" />
           </button>
         </div>
 
@@ -74,7 +74,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
         <form onSubmit={handleSubmit} class="p-6 space-y-5">
           {/* Webhook Name */}
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
               Webhook Name
             </label>
             <input
@@ -83,29 +83,29 @@ function WebhookEditModal(props: WebhookEditModalProps) {
               onInput={(e) => setName(e.currentTarget.value)}
               placeholder="e.g., GitHub -> Slack"
               required
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+              class="w-full px-4 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
+            <label class="block text-sm font-medium text-slate-300 mb-2">
               Description
-              <span class="text-slate-400 font-normal ml-2">(optional)</span>
+              <span class="text-slate-500 font-normal ml-2">(optional)</span>
             </label>
             <input
               type="text"
               value={description()}
               onInput={(e) => setDescription(e.currentTarget.value)}
               placeholder="e.g., GitHub API, Stripe Webhooks"
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+              class="w-full px-4 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
             />
           </div>
 
           {/* Target URL */}
           <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">
-              Target URL <span class="text-red-500">*</span>
+            <label class="block text-sm font-medium text-slate-300 mb-2">
+              Target URL <span class="text-red-400">*</span>
             </label>
             <input
               type="url"
@@ -113,20 +113,20 @@ function WebhookEditModal(props: WebhookEditModalProps) {
               onInput={(e) => setTargetUrl(e.currentTarget.value)}
               placeholder="https://your-app.com/webhook"
               required
-              class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-all"
+              class="w-full px-4 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
             />
           </div>
 
           {/* Security Settings */}
-          <div class="border border-slate-200 rounded-lg overflow-hidden">
+          <div class="border border-white/10 rounded-lg overflow-hidden bg-black/20">
             <button
               type="button"
               onClick={() => setShowSecurity(!showSecurity())}
-              class="w-full flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100 transition-colors"
+              class="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
             >
               <div class="flex items-center space-x-2">
-                <FiShield class="w-5 h-5 text-slate-600" />
-                <span class="font-medium text-slate-700">Security Settings</span>
+                <FiShield class="w-5 h-5 text-primary-400" />
+                <span class="font-medium text-slate-200">Security Settings</span>
               </div>
               <Show when={showSecurity()} fallback={<FiChevronDown class="w-5 h-5 text-slate-400" />}>
                 <FiChevronUp class="w-5 h-5 text-slate-400" />
@@ -134,7 +134,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
             </button>
 
             <Show when={showSecurity()}>
-              <div class="p-4 space-y-4 bg-white">
+              <div class="p-4 space-y-4 border-t border-white/10">
                 {/* API Key Authentication */}
                 <div class="border-l-4 border-primary-500 pl-4">
                   <label class="flex items-center space-x-2 cursor-pointer">
@@ -142,11 +142,11 @@ function WebhookEditModal(props: WebhookEditModalProps) {
                       type="checkbox"
                       checked={requireApiKey()}
                       onChange={(e) => setRequireApiKey(e.currentTarget.checked)}
-                      class="w-4 h-4 text-primary-600 border-slate-300 rounded focus:ring-2 focus:ring-primary-500"
+                      class="w-4 h-4 text-primary-500 border-slate-600 rounded focus:ring-2 focus:ring-primary-500 bg-slate-800"
                     />
                     <div class="flex items-center space-x-2">
-                      <FiLock class="w-4 h-4 text-primary-600" />
-                      <span class="text-sm font-medium text-slate-700">Require API Key</span>
+                      <FiLock class="w-4 h-4 text-primary-400" />
+                      <span class="text-sm font-medium text-slate-300">Require API Key</span>
                     </div>
                   </label>
                   
@@ -159,12 +159,12 @@ function WebhookEditModal(props: WebhookEditModalProps) {
                           value={apiKey()}
                           onInput={(e) => setApiKey(e.currentTarget.value)}
                           placeholder="Enter or generate API key"
-                          class="w-full px-3 py-2 pr-10 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none font-mono"
+                          class="w-full px-3 py-2 pr-10 text-sm rounded-lg outline-none input-premium font-mono"
                         />
                         <button
                           type="button"
                           onClick={() => setShowApiKey(!showApiKey())}
-                          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-700 transition-colors"
+                          class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-500 hover:text-slate-300 transition-colors"
                           title={showApiKey() ? "Hide API key" : "Show API key"}
                         >
                           <Show when={showApiKey()} fallback={<FiEye class="w-4 h-4" />}>
@@ -175,30 +175,30 @@ function WebhookEditModal(props: WebhookEditModalProps) {
                       <button
                         type="button"
                         onClick={generateApiKey}
-                        class="px-4 py-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors text-sm font-medium"
+                        class="px-4 py-2 bg-primary-500/20 text-primary-300 rounded-lg hover:bg-primary-500/30 transition-colors text-sm font-medium border border-primary-500/20"
                       >
                         Generate
                       </button>
                     </div>
                     <p class="text-xs text-slate-500">
-                      Clients must include this key in the <code class="bg-slate-100 px-1 rounded">X-API-Key</code> header
+                      Clients must include this key in the <code class="bg-white/10 px-1 rounded text-slate-300">X-API-Key</code> header
                     </p>
                   </div>
                 </Show>
                 </div>
 
                 {/* IP Whitelist */}
-                <div class="border-l-4 border-green-500 pl-4">
+                <div class="border-l-4 border-emerald-500 pl-4">
                   <label class="flex items-center space-x-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={requireIpWhitelist()}
                       onChange={(e) => setRequireIpWhitelist(e.currentTarget.checked)}
-                      class="w-4 h-4 text-green-600 border-slate-300 rounded focus:ring-2 focus:ring-green-500"
+                      class="w-4 h-4 text-emerald-500 border-slate-600 rounded focus:ring-2 focus:ring-emerald-500 bg-slate-800"
                     />
                     <div class="flex items-center space-x-2">
-                      <FiShield class="w-4 h-4 text-green-600" />
-                      <span class="text-sm font-medium text-slate-700">IP Whitelist</span>
+                      <FiShield class="w-4 h-4 text-emerald-400" />
+                      <span class="text-sm font-medium text-slate-300">IP Whitelist</span>
                     </div>
                   </label>
                   
@@ -209,7 +209,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
                         onInput={(e) => setAllowedIps(e.currentTarget.value)}
                         placeholder="192.168.1.1, 10.0.0.5"
                         rows="2"
-                        class="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none font-mono"
+                        class="w-full px-3 py-2 text-sm rounded-lg outline-none input-premium font-mono"
                       />
                       <p class="text-xs text-slate-500">
                         Only these IP addresses can call this webhook (comma-separated)
@@ -223,7 +223,7 @@ function WebhookEditModal(props: WebhookEditModalProps) {
 
           {/* Error Message */}
           <Show when={error()}>
-            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-start space-x-2">
+            <div class="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-start space-x-2">
               <FiAlertCircle class="w-5 h-5 mt-0.5 flex-shrink-0" />
               <span class="text-sm">{error()}</span>
             </div>
@@ -234,14 +234,14 @@ function WebhookEditModal(props: WebhookEditModalProps) {
             <button
               type="button"
               onClick={props.onClose}
-              class="flex-1 bg-slate-100 text-slate-700 font-semibold py-3 px-6 rounded-lg hover:bg-slate-200 transition-colors"
+              class="flex-1 bg-white/5 text-slate-300 font-semibold py-3 px-6 rounded-lg hover:bg-white/10 transition-colors border border-white/10"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading()}
-              class="flex-1 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold py-3 px-6 rounded-lg hover:from-primary-600 hover:to-secondary-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              class="flex-1 btn-primary text-white font-semibold py-3 px-6 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading() ? "Saving..." : "Save Changes"}
             </button>

@@ -49,20 +49,31 @@ function Login() {
   };
 
   return (
-    <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center px-4">
-      <div class="w-full max-w-md">
+    <div class="min-h-screen bg-[var(--color-dark-bg)] flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Background Effects */}
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary-900/20 via-dark-bg to-dark-bg pointer-events-none"></div>
+      <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary-500/10 rounded-full blur-[100px] animate-pulse pointer-events-none" style="animation-delay: 1s"></div>
+
+      <div class="w-full max-w-md relative z-10">
         {/* Logo/Header */}
         <div class="text-center mb-8">
-          <img src="/logo.svg" alt="Webhoxy Logo" class="h-16 w-auto mx-auto mb-4" />
-          <p class="text-slate-600">Sign in to your account</p>
+          <div class="relative inline-block group mb-4">
+            <div class="absolute -inset-1 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
+            <div class="relative bg-dark-surface rounded-xl p-2">
+              <img src="/logo.svg" alt="Webhoxy Logo" class="h-12 w-auto" />
+            </div>
+          </div>
+          <h2 class="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+          <p class="text-slate-400">Sign in to your account</p>
         </div>
 
         {/* Login Form */}
-        <div class="bg-white rounded-2xl shadow-xl p-8 border border-slate-200">
+        <div class="glass-card rounded-2xl p-8">
           <form onSubmit={handleSubmit} class="space-y-6">
             {/* Error Message */}
             <Show when={error()}>
-              <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center space-x-2">
+              <div class="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-lg flex items-center space-x-2">
                 <FiAlertCircle class="w-5 h-5" />
                 <span class="text-sm">{error()}</span>
               </div>
@@ -70,12 +81,12 @@ function Login() {
 
             {/* Username Field */}
             <div>
-              <label for="username" class="block text-sm font-medium text-slate-700 mb-2">
+              <label for="username" class="block text-sm font-medium text-slate-300 mb-2">
                 Username
               </label>
-              <div class="relative">
+              <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiUser class="w-5 h-5 text-slate-400" />
+                  <FiUser class="w-5 h-5 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
                 </div>
                 <input
                   id="username"
@@ -83,7 +94,7 @@ function Login() {
                   required
                   value={username()}
                   onInput={(e) => setUsername(e.currentTarget.value)}
-                  class="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+                  class="block w-full pl-10 pr-3 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
                   placeholder="Enter your username"
                   disabled={isLoading()}
                 />
@@ -92,12 +103,12 @@ function Login() {
 
             {/* Password Field */}
             <div>
-              <label for="password" class="block text-sm font-medium text-slate-700 mb-2">
+              <label for="password" class="block text-sm font-medium text-slate-300 mb-2">
                 Password
               </label>
-              <div class="relative">
+              <div class="relative group">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <FiLock class="w-5 h-5 text-slate-400" />
+                  <FiLock class="w-5 h-5 text-slate-500 group-focus-within:text-primary-400 transition-colors" />
                 </div>
                 <input
                   id="password"
@@ -105,7 +116,7 @@ function Login() {
                   required
                   value={password()}
                   onInput={(e) => setPassword(e.currentTarget.value)}
-                  class="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-colors"
+                  class="block w-full pl-10 pr-3 py-3 rounded-lg outline-none input-premium placeholder:text-slate-600"
                   placeholder="Enter your password"
                   disabled={isLoading()}
                 />
@@ -116,7 +127,7 @@ function Login() {
             <button
               type="submit"
               disabled={isLoading()}
-              class="w-full bg-gradient-to-r from-primary-500 to-secondary-500 text-white py-3 px-4 rounded-lg font-medium hover:from-primary-600 hover:to-secondary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl"
+              class="w-full btn-primary text-white py-3 px-4 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading() ? "Signing in..." : "Sign in"}
             </button>
@@ -124,7 +135,7 @@ function Login() {
         </div>
 
         {/* Footer */}
-        <p class="text-center text-sm text-slate-500 mt-6">
+        <p class="text-center text-sm text-slate-500 mt-8">
           Webhoxy - Webhook Proxy Service
         </p>
       </div>
