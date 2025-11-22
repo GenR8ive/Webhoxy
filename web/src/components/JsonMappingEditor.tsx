@@ -2,7 +2,7 @@ import { createSignal, createResource, For, Show, createEffect, onMount, onClean
 import { fieldApi, mappingApi } from "../lib/api";
 import { FiRefreshCw, FiSave, FiPlus, FiCopy, FiCheck } from "solid-icons/fi";
 import type { Mapping } from "../lib/types";
-import { templates } from "../templates";
+
 import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightActiveLine, KeyBinding, Decoration, DecorationSet, WidgetType, ViewPlugin, ViewUpdate } from "@codemirror/view";
 import { EditorState, Compartment, RangeSetBuilder } from "@codemirror/state";
 import { json, jsonParseLinter } from "@codemirror/lang-json";
@@ -219,17 +219,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
     }
   };
 
-  // Apply template
-  const handleApplyTemplate = (template: any) => {
-    const formatted = JSON.stringify(template.examplePayload, null, 2);
-    if (editorView) {
-      editorView.dispatch({
-        changes: { from: 0, to: editorView.state.doc.length, insert: formatted }
-      });
-    }
-    setSuccess(`✅ ${template.name} template applied!`);
-    setTimeout(() => setSuccess(""), 2000);
-  };
+
 
   // Beautify JSON
   const handleBeautify = () => {
@@ -644,26 +634,7 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
         </div>
       </Show>
 
-      {/* Quick Templates */}
-      <div class="mb-6 bg-gradient-to-r from-primary-900/20 to-secondary-900/20 rounded-lg p-4 border border-primary-500/20">
-        <h3 class="font-bold text-slate-200 mb-3 text-sm">🎯 Quick Templates</h3>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <For each={templates}>
-            {(template) => (
-              <button
-                type="button"
-                onClick={() => handleApplyTemplate(template)}
-                class="p-2 bg-white/5 rounded-lg border border-white/10 hover:border-primary-400/50 transition-all text-left hover:bg-white/10 cursor-pointer"
-              >
-                <div class="flex items-center space-x-2">
-                  <span class="text-lg">{template.icon}</span>
-                  <span class="font-bold text-xs text-slate-300">{template.name}</span>
-                </div>
-              </button>
-            )}
-          </For>
-        </div>
-      </div>
+
 
       <div class="grid grid-cols-12 gap-6">
         {/* Source Fields Panel */}

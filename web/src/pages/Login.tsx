@@ -59,10 +59,8 @@ function Login() {
         {/* Logo/Header */}
         <div class="text-center mb-8">
           <div class="relative inline-block group mb-4">
-            <div class="absolute -inset-1 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl blur opacity-25 group-hover:opacity-75 transition duration-200"></div>
-            <div class="relative bg-dark-surface rounded-xl p-2">
+            <div class="absolute -inset-1 bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl blur opacity-25"></div>
               <img src="/logo.svg" alt="Webhoxy Logo" class="h-12 w-auto" />
-            </div>
           </div>
           <h2 class="text-2xl font-bold text-white mb-2">Welcome Back</h2>
           <p class="text-slate-400">Sign in to your account</p>

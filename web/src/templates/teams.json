@@ -1,8 +1,0 @@
-{
-  "name": "Microsoft Teams",
-  "description": "Teams incoming webhook payload example",
-  "icon": "👔",
-  "examplePayload": {
-  }
-}
-

@@ -1,9 +1,9 @@
 import { useParams, A } from "@solidjs/router";
-import { createResource, Show } from "solid-js";
+import { createResource, Show, createSignal } from "solid-js";
 import Layout from "../components/Layout";
 import MappingEditor from "../components/MappingEditor";
 import { webhookApi } from "../lib/api";
-import { FiArrowLeft } from "solid-icons/fi";
+import { FiArrowLeft, FiCopy } from "solid-icons/fi";
 
 function MappingsPage() {
   const params = useParams();
