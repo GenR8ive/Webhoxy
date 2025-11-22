@@ -35,9 +35,9 @@ EXPOSE ${VITE_WEB_PORT:-5173}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${VITE_WEB_PORT:-80}/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${VITE_WEB_PORT:-5173}/ || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start nginx with dynamic port substitution
+CMD ["/bin/sh", "-c", "sed -i \"s/listen 80;/listen ${VITE_WEB_PORT:-5173};/g\" /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
 
 

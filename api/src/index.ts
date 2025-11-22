@@ -16,6 +16,7 @@ import { createLogCleanupService } from './services/log-cleanup.js';
 import { createActivityTracker } from './services/activity-tracker.js';
 
 const fastify = Fastify({
+  trustProxy: true,
   logger: {
     level: config.logLevel,
     transport: config.logPretty

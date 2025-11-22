@@ -25,7 +25,7 @@ services:
         VITE_WEBHOOK_URL: ${WEBHOOK_URL:-}
     container_name: webhoxy-web
     ports:
-      - "${WEB_PORT:-5173}:80"
+      - "${WEB_PORT:-5173}:${WEB_PORT:-5173}"
     environment:
       - VITE_API_URL=${API_URL:-http://localhost:${API_PORT:-8080}/api}
       - VITE_WEB_URL=${WEB_URL:-http://localhost:${WEB_PORT:-5173}}

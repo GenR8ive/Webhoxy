@@ -37,7 +37,7 @@ RUN mkdir -p /app/data && chown -R node:node /app
 USER node
 
 # Expose port
-EXPOSE 8080
+EXPOSE ${PORT:-8080}
 
 # Health check
 # Note: Uses environment variable $PORT (defaults to 8080)
