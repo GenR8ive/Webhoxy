@@ -114,7 +114,7 @@ function WebhookList(props: WebhookListProps) {
                           <span class="text-slate-500">Proxy URL:</span>
                           <code class="text-xs bg-black/30 px-2 py-1 rounded text-slate-300 font-mono border border-white/5">
                             {(() => {
-                              const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/webhooks/receive`;
+                              const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/hook`;
                               // Remove trailing slash if present to avoid double slashes
                               const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
                               return `${cleanBaseUrl}/${webhook.id}`;
@@ -122,7 +122,7 @@ function WebhookList(props: WebhookListProps) {
                           </code>
                           <button
                             onClick={() => {
-                              const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/webhooks/receive`;
+                              const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/hook`;
                               const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
                               const url = `${cleanBaseUrl}/${webhook.id}`;
                               navigator.clipboard.writeText(url).then(() => {
