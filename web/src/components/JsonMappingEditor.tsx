@@ -486,6 +486,33 @@ function JsonMappingEditor(props: JsonMappingEditorProps) {
           highlightSelectionMatches(),
           variableChipPlugin,
           keymap.of([...createAutocompleteKeymap(), ...defaultKeymap, indentWithTab]),
+          EditorView.domEventHandlers({
+            paste: (event, view) => {
+              const clipboardData = event.clipboardData;
+              if (!clipboardData) return;
+              
+              const pastedText = clipboardData.getData("text/plain");
+              if (!pastedText) return;
+
+              // Check for "@variable" pattern in JSON strings
+              if (pastedText.includes('"@')) {
+                event.preventDefault();
+                
+                // Replace "@variable" with "{{variable}}"
+                const processedText = pastedText.replace(/"@([^"]+)"/g, '"{{$1}}"');
+                
+                view.dispatch({
+                  userEvent: "input.paste",
+                  changes: {
+                    from: view.state.selection.main.from,
+                    to: view.state.selection.main.to,
+                    insert: processedText
+                  }
+                });
+                return true;
+              }
+            }
+          }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
               const value = update.state.doc.toString();
