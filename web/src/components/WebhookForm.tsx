@@ -23,6 +23,8 @@ function WebhookForm(props: WebhookFormProps) {
   const [showApiKey, setShowApiKey] = createSignal(false);
   const [allowedIps, setAllowedIps] = createSignal("");
   const [requireIpWhitelist, setRequireIpWhitelist] = createSignal(false);
+  const [deduplicationEnabled, setDeduplicationEnabled] = createSignal(false);
+  const [deduplicationWindow, setDeduplicationWindow] = createSignal(60);
 
   const generateApiKey = () => {
     const key = Array.from(crypto.getRandomValues(new Uint8Array(32)))
@@ -45,6 +47,8 @@ function WebhookForm(props: WebhookFormProps) {
         allowed_ips: requireIpWhitelist() ? allowedIps() : undefined,
         require_api_key: requireApiKey(),
         require_ip_whitelist: requireIpWhitelist(),
+        deduplication_enabled: deduplicationEnabled(),
+        deduplication_window: deduplicationWindow(),
       });
 
       setProxyUrl(response.proxy_url);
@@ -57,6 +61,8 @@ function WebhookForm(props: WebhookFormProps) {
       setRequireApiKey(false);
       setAllowedIps("");
       setRequireIpWhitelist(false);
+      setDeduplicationEnabled(false);
+      setDeduplicationWindow(60);
       setShowSecurity(false);
 
       if (props.onSuccess) {
@@ -237,6 +243,43 @@ function WebhookForm(props: WebhookFormProps) {
                     />
                     <p class="text-xs text-slate-500">
                       Only these IP addresses can call this webhook (comma-separated)
+                    </p>
+                  </div>
+                </Show>
+              </div>
+
+              {/* Deduplication */}
+              <div class="border-l-4 border-blue-500 pl-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={deduplicationEnabled()}
+                    onChange={(e) => setDeduplicationEnabled(e.currentTarget.checked)}
+                    class="w-4 h-4 text-blue-500 border-slate-600 rounded focus:ring-offset-0 focus:ring-2 focus:ring-blue-500 bg-slate-800"
+                  />
+                  <div class="flex items-center space-x-2">
+                    <FiCopy class="w-4 h-4 text-blue-400" />
+                    <span class="text-sm font-medium text-slate-300">Prevent Duplicates</span>
+                  </div>
+                </label>
+                
+                <Show when={deduplicationEnabled()}>
+                  <div class="mt-3 space-y-2">
+                    <div class="flex items-center space-x-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="3600"
+                        value={deduplicationWindow()}
+                        onInput={(e) => setDeduplicationWindow(parseInt(e.currentTarget.value) || 60)}
+                        class="w-24 px-3 py-2 text-sm rounded-lg outline-none font-mono input-premium"
+                      />
+                      <span class="text-sm text-slate-400">seconds window</span>
+                    </div>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                      If enabled, Webhoxy will calculate a hash of the incoming payload. 
+                      If an identical payload is received within the specified window, 
+                      it will be skipped to prevent double-processing.
                     </p>
                   </div>
                 </Show>

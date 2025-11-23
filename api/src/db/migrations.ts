@@ -155,6 +155,28 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
     `,
   },
+  {
+    id: 8,
+    name: 'add_deduplication',
+    sql: `
+      -- Add deduplication settings to webhooks table
+      ALTER TABLE webhooks ADD COLUMN deduplication_enabled INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE webhooks ADD COLUMN deduplication_window INTEGER NOT NULL DEFAULT 60; -- Default 60 seconds
+
+      -- Create processed_webhooks table to track duplicates
+      CREATE TABLE IF NOT EXISTS processed_webhooks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        webhook_id INTEGER NOT NULL,
+        request_hash TEXT NOT NULL,
+        processed_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE
+      );
+
+      -- Create indexes for fast lookups
+      CREATE INDEX IF NOT EXISTS idx_processed_webhooks_lookup ON processed_webhooks(webhook_id, request_hash);
+      CREATE INDEX IF NOT EXISTS idx_processed_webhooks_time ON processed_webhooks(processed_at);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {

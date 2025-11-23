@@ -20,7 +20,7 @@ function ProtectedRoute(props: ProtectedRouteProps) {
 
   return (
     <Show when={!isLoading() && isAuthenticated()} fallback={
-      <div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div class="min-h-screen bg-[var(--color-dark-bg)] text-slate-200 font-sans selection:bg-primary-500/30 selection:text-primary-200 flex items-center justify-center">
         <div class="text-center">
           <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent mb-4"></div>
           <p class="text-slate-600">Checking authentication...</p>

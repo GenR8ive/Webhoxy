@@ -7,6 +7,8 @@ export interface Webhook {
   allowed_ips: string | null;
   require_api_key: number;
   require_ip_whitelist: number;
+  deduplication_enabled: number;
+  deduplication_window: number;
   created_at: string;
 }
 
@@ -18,6 +20,8 @@ export interface WebhookCreateRequest {
   allowed_ips?: string;
   require_api_key?: boolean;
   require_ip_whitelist?: boolean;
+  deduplication_enabled?: boolean;
+  deduplication_window?: number;
 }
 
 export interface WebhookResponse {

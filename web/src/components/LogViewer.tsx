@@ -1,4 +1,4 @@
-import { createSignal, createResource, For, Show, createEffect } from "solid-js";
+import { createSignal, createResource, For, Show, createEffect, onCleanup } from "solid-js";
 import { logApi } from "../lib/api";
 import { FiChevronDown, FiChevronUp, FiCheckCircle, FiXCircle, FiClock, FiChevronLeft, FiChevronRight } from "solid-icons/fi";
 import type { Log } from "../lib/types";
@@ -17,10 +17,22 @@ function LogViewer(props: LogViewerProps) {
     setPage(1);
   });
 
-  const [logsData] = createResource(
+  const [logsData, { refetch }] = createResource(
     () => ({ webhookId: props.webhookId, page: page(), limit: limit() }),
     ({ webhookId }) => logApi.list(webhookId, page(), limit())
   );
+
+  // Auto-refresh logic
+  const [isAutoRefresh, setIsAutoRefresh] = createSignal(false);
+
+  createEffect(() => {
+    if (isAutoRefresh()) {
+      const interval = setInterval(() => {
+        refetch();
+      }, 3000); // Poll every 3 seconds
+      onCleanup(() => clearInterval(interval));
+    }
+  });
 
   const [expandedId, setExpandedId] = createSignal<number | null>(null);
 
@@ -56,11 +68,24 @@ function LogViewer(props: LogViewerProps) {
 
   return (
     <div class="glass-card rounded-xl p-6">
-      <div class="mb-6">
-        <h2 class="text-2xl font-bold text-white mb-2">Webhook Logs</h2>
-        <p class="text-slate-400">
-          {total() > 0 ? `Total: ${total()} logs` : 'View webhook delivery history and responses'}
-        </p>
+      <div class="mb-6 flex items-center justify-between">
+        <div>
+          <h2 class="text-2xl font-bold text-white mb-2">Webhook Logs</h2>
+          <p class="text-slate-400">
+            {total() > 0 ? `Total: ${total()} logs` : 'View webhook delivery history and responses'}
+          </p>
+        </div>
+        <button
+          onClick={() => setIsAutoRefresh(!isAutoRefresh())}
+          class={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center space-x-2 border ${
+            isAutoRefresh() 
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" 
+              : "bg-white/5 text-slate-400 border-white/10 hover:bg-white/10"
+          }`}
+        >
+          <span class={`w-2 h-2 rounded-full ${isAutoRefresh() ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`}></span>
+          <span>{isAutoRefresh() ? "Live Updates On" : "Live Updates Off"}</span>
+        </button>
       </div>
 
       <Show

@@ -14,6 +14,8 @@ const createWebhookSchema = z.object({
   allowed_ips: z.string().optional(), // Comma-separated IP addresses
   require_api_key: z.boolean().optional().default(false),
   require_ip_whitelist: z.boolean().optional().default(false),
+  deduplication_enabled: z.boolean().optional().default(false),
+  deduplication_window: z.number().min(1).max(3600).optional().default(60),
 });
 
 const webhookParamsSchema = z.object({
@@ -43,8 +45,12 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       
       try {
         const stmt = fastify.db.prepare(`
-          INSERT INTO webhooks (name, description, target_url, api_key, allowed_ips, require_api_key, require_ip_whitelist)
-          VALUES (?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO webhooks (
+            name, description, target_url, api_key, allowed_ips, 
+            require_api_key, require_ip_whitelist, 
+            deduplication_enabled, deduplication_window
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
         const result = stmt.run(
@@ -54,7 +60,9 @@ export async function webhookRoutes(fastify: FastifyInstance) {
           body.api_key || null,
           body.allowed_ips || null,
           body.require_api_key ? 1 : 0,
-          body.require_ip_whitelist ? 1 : 0
+          body.require_ip_whitelist ? 1 : 0,
+          body.deduplication_enabled ? 1 : 0,
+          body.deduplication_window
         );
         const webhookId = result.lastInsertRowid as number;
         
@@ -185,6 +193,14 @@ export async function webhookRoutes(fastify: FastifyInstance) {
         updates.push('require_ip_whitelist = ?');
         values.push(body.require_ip_whitelist ? 1 : 0);
       }
+      if (body.deduplication_enabled !== undefined) {
+        updates.push('deduplication_enabled = ?');
+        values.push(body.deduplication_enabled ? 1 : 0);
+      }
+      if (body.deduplication_window !== undefined) {
+        updates.push('deduplication_window = ?');
+        values.push(body.deduplication_window);
+      }
       
       if (updates.length === 0) {
         return reply.badRequest('No fields to update');
@@ -292,6 +308,40 @@ export async function webhookRoutes(fastify: FastifyInstance) {
           fastify.log.warn({ webhook_id, clientIp, allowedIps }, 'Forbidden: IP not in whitelist');
           return reply.code(403).send({ error: 'Forbidden: IP address not allowed' });
         }
+      }
+
+      // Deduplication Logic
+      if (webhook.deduplication_enabled) {
+        const crypto = await import('crypto');
+        const payloadString = JSON.stringify(payload);
+        const hash = crypto.createHash('sha256').update(payloadString).digest('hex');
+        
+        // Check for recent duplicate
+        const duplicate = fastify.db.prepare(`
+          SELECT id FROM processed_webhooks 
+          WHERE webhook_id = ? 
+          AND request_hash = ? 
+          AND datetime(processed_at) > datetime('now', '-' || ? || ' seconds')
+        `).get(webhook_id, hash, webhook.deduplication_window) as { id: number } | undefined;
+
+        if (duplicate) {
+          fastify.log.info({ webhook_id, hash }, 'Duplicate webhook skipped');
+          return reply.code(202).send({ status: 'skipped', reason: 'duplicate' });
+        }
+
+        // Record this request
+        fastify.db.prepare(`
+          INSERT INTO processed_webhooks (webhook_id, request_hash)
+          VALUES (?, ?)
+        `).run(webhook_id, hash);
+
+        // Cleanup old records for this webhook (simple cleanup)
+        // Delete records older than 2x the window to keep table size manageable
+        fastify.db.prepare(`
+          DELETE FROM processed_webhooks 
+          WHERE webhook_id = ? 
+          AND datetime(processed_at) < datetime('now', '-' || ? || ' seconds')
+        `).run(webhook_id, webhook.deduplication_window * 2);
       }
       
       // Get mappings
