@@ -1,10 +1,29 @@
 import { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import crypto from 'crypto';
 import type { Webhook, WebhookCreateRequest, WebhookResponse, User } from '../db/types.js';
 import { forwardWebhook } from '../services/forwarder.js';
 import { applyMappings } from '../utils/json-mapper.js';
 import { authenticateUser, requirePasswordChange } from '../middleware/auth.js';
 import { config } from '../config/index.js';
+
+// Helper for deterministic JSON stringify
+function stableStringify(obj: any): string {
+  if (typeof obj !== 'object' || obj === null) {
+    return JSON.stringify(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    return '[' + obj.map(stableStringify).join(',') + ']';
+  }
+  
+  const keys = Object.keys(obj).sort();
+  const parts = keys.map(key => {
+    return JSON.stringify(key) + ':' + stableStringify(obj[key]);
+  });
+  
+  return '{' + parts.join(',') + '}';
+}
 
 const createWebhookSchema = z.object({
   name: z.string().min(1),
@@ -312,36 +331,51 @@ export async function webhookRoutes(fastify: FastifyInstance) {
 
       // Deduplication Logic
       if (webhook.deduplication_enabled) {
-        const crypto = await import('crypto');
-        const payloadString = JSON.stringify(payload);
+        const payloadString = stableStringify(payload);
         const hash = crypto.createHash('sha256').update(payloadString).digest('hex');
         
-        // Check for recent duplicate
-        const duplicate = fastify.db.prepare(`
-          SELECT id FROM processed_webhooks 
-          WHERE webhook_id = ? 
-          AND request_hash = ? 
-          AND datetime(processed_at) > datetime('now', '-' || ? || ' seconds')
-        `).get(webhook_id, hash, webhook.deduplication_window) as { id: number } | undefined;
+        // Use a transaction to ensure atomicity and prevent race conditions
+        const checkAndInsert = fastify.db.transaction(() => {
+          // Check for recent duplicate
+          const duplicate = fastify.db.prepare(`
+            SELECT id FROM processed_webhooks 
+            WHERE webhook_id = ? 
+            AND request_hash = ? 
+            AND datetime(processed_at) > datetime('now', '-' || ? || ' seconds')
+          `).get(webhook_id, hash, webhook.deduplication_window) as { id: number } | undefined;
 
-        if (duplicate) {
+          if (duplicate) {
+            return true; // It is a duplicate
+          }
+
+          // Record this request
+          fastify.db.prepare(`
+            INSERT INTO processed_webhooks (webhook_id, request_hash)
+            VALUES (?, ?)
+          `).run(webhook_id, hash);
+          
+          return false; // Not a duplicate
+        });
+
+        const isDuplicate = checkAndInsert();
+
+        if (isDuplicate) {
           fastify.log.info({ webhook_id, hash }, 'Duplicate webhook skipped');
           return reply.code(202).send({ status: 'skipped', reason: 'duplicate' });
         }
 
-        // Record this request
-        fastify.db.prepare(`
-          INSERT INTO processed_webhooks (webhook_id, request_hash)
-          VALUES (?, ?)
-        `).run(webhook_id, hash);
-
         // Cleanup old records for this webhook (simple cleanup)
         // Delete records older than 2x the window to keep table size manageable
-        fastify.db.prepare(`
-          DELETE FROM processed_webhooks 
-          WHERE webhook_id = ? 
-          AND datetime(processed_at) < datetime('now', '-' || ? || ' seconds')
-        `).run(webhook_id, webhook.deduplication_window * 2);
+        try {
+          fastify.db.prepare(`
+            DELETE FROM processed_webhooks 
+            WHERE webhook_id = ? 
+            AND datetime(processed_at) < datetime('now', '-' || ? || ' seconds')
+          `).run(webhook_id, webhook.deduplication_window * 2);
+        } catch (err) {
+          // Ignore cleanup errors to not block the request
+          fastify.log.warn({ err }, 'Failed to cleanup old deduplication records');
+        }
       }
       
       // Get mappings
