@@ -18,7 +18,7 @@ Webhoxy is a high-performance webhook proxy service built with Fastify and Solid
 
 ### Clone Repo
 ```bash
-https://github.com/GenR8ive/Webhoxy.git
+git clone https://github.com/GenR8ive/Webhoxy.git
 ```
 ### Running Locally (Development)
 
@@ -67,4 +67,5 @@ https://github.com/GenR8ive/Webhoxy.git
 ## License
 
 MIT
+
 
