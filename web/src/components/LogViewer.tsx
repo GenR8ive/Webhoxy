@@ -2,6 +2,7 @@ import { createSignal, createResource, For, Show, createEffect, onCleanup } from
 import { logApi } from "../lib/api";
 import { FiChevronDown, FiChevronUp, FiCheckCircle, FiXCircle, FiClock, FiChevronLeft, FiChevronRight } from "solid-icons/fi";
 import type { Log } from "../lib/types";
+import { formatDateTime, formatRelativeTime } from "../lib/dateUtils";
 
 interface LogViewerProps {
   webhookId?: number;
@@ -136,10 +137,10 @@ function LogViewer(props: LogViewerProps) {
                       {/* Timestamp */}
                       <div class="flex-1">
                         <div class="text-sm text-slate-300">
-                          {new Date(log.created_at).toLocaleString()}
+                          {formatDateTime(log.created_at)}
                         </div>
                         <div class="text-xs text-slate-500">
-                          {/* Relative time removed */}
+                          {formatRelativeTime(log.created_at)}
                         </div>
                       </div>
                     </div>

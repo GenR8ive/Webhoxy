@@ -4,6 +4,7 @@ import { webhookApi } from "../lib/api";
 import { FiTrash2, FiExternalLink, FiCopy, FiCheck, FiZap, FiChevronLeft, FiChevronRight, FiEdit } from "solid-icons/fi";
 import WebhookEditModal from "./WebhookEditModal";
 import type { Webhook } from "../lib/types";
+import { formatDateTime } from "../lib/dateUtils";
 
 interface WebhookListProps {
   refresh?: number;
@@ -117,14 +118,14 @@ function WebhookList(props: WebhookListProps) {
                               const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/hook`;
                               // Remove trailing slash if present to avoid double slashes
                               const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-                              return `${cleanBaseUrl}/${webhook.id}`;
+                              return `${cleanBaseUrl}/${webhook.uuid}`;
                             })()}
                           </code>
                           <button
                             onClick={() => {
                               const baseUrl = import.meta.env.VITE_WEBHOOK_URL || `${import.meta.env.VITE_API_URL}/hook`;
                               const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-                              const url = `${cleanBaseUrl}/${webhook.id}`;
+                              const url = `${cleanBaseUrl}/${webhook.uuid}`;
                               navigator.clipboard.writeText(url).then(() => {
                                 setCopiedId(webhook.id);
                                 setTimeout(() => setCopiedId(null), 2000);
@@ -144,7 +145,7 @@ function WebhookList(props: WebhookListProps) {
                       </div>
 
                       <div class="mt-3 text-xs text-slate-500">
-                        Created: {new Date(webhook.created_at).toLocaleString()}
+                        Created: {formatDateTime(webhook.created_at)}
                       </div>
                     </div>
 

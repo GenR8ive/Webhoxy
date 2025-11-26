@@ -41,8 +41,8 @@ const webhookParamsSchema = z.object({
   id: z.coerce.number(),
 });
 
-const webhookIdParamsSchema = z.object({
-  webhook_id: z.coerce.number(),
+const webhookUuidParamsSchema = z.object({
+  webhook_uuid: z.string().uuid(),
 });
 
 const paginationQuerySchema = z.object({
@@ -52,6 +52,11 @@ const paginationQuerySchema = z.object({
 
 
 export async function webhookRoutes(fastify: FastifyInstance) {
+  // Helper function to generate UUID v4
+  function generateUUID(): string {
+    return crypto.randomUUID();
+  }
+
   // Create webhook
   fastify.post<{ Body: WebhookCreateRequest; Reply: WebhookResponse }>(
     '/webhooks',
@@ -63,16 +68,20 @@ export async function webhookRoutes(fastify: FastifyInstance) {
       const user = request.user! as User;
       
       try {
+        // Generate UUID for this webhook
+        const uuid = generateUUID();
+        
         const stmt = fastify.db.prepare(`
           INSERT INTO webhooks (
-            name, description, target_url, api_key, allowed_ips, 
+            uuid, name, description, target_url, api_key, allowed_ips, 
             require_api_key, require_ip_whitelist, 
             deduplication_enabled, deduplication_window
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         
         const result = stmt.run(
+          uuid,
           body.name, 
           body.description, 
           body.target_url,
@@ -92,12 +101,12 @@ export async function webhookRoutes(fastify: FastifyInstance) {
           description: `Created webhook: ${body.name}`,
           ipAddress: request.ip,
           userAgent: request.headers['user-agent'],
-          metadata: { webhookId, webhookName: body.name },
+          metadata: { webhookId, webhookName: body.name, uuid },
         });
         
         // Ensure publicUrl doesn't have a trailing slash
         const baseUrl = config.publicUrl.endsWith('/') ? config.publicUrl.slice(0, -1) : config.publicUrl;
-        const proxyUrl = `${baseUrl}/hook/${webhookId}`;
+        const proxyUrl = `${baseUrl}/hook/${uuid}`;
         
         return { id: webhookId, proxy_url: proxyUrl };
       } catch (error: any) {
@@ -291,22 +300,24 @@ export async function webhookRoutes(fastify: FastifyInstance) {
   );
 
   // Receive and forward webhook (proxy endpoint)
-  fastify.post<{ Params: { webhook_id: number }; Body: any }>(
-    '/hook/:webhook_id',
+  fastify.post<{ Params: { webhook_uuid: string }; Body: any }>(
+    '/hook/:webhook_uuid',
     async (request, reply) => {
-      const { webhook_id } = webhookIdParamsSchema.parse(request.params);
+      const { webhook_uuid } = webhookUuidParamsSchema.parse(request.params);
       const payload = request.body;
       
-      fastify.log.info({ webhook_id }, 'Received webhook');
+      fastify.log.info({ webhook_uuid }, 'Received webhook');
       
-      // Get webhook configuration
+      // Get webhook configuration by UUID
       const webhook = fastify.db
-        .prepare('SELECT * FROM webhooks WHERE id = ?')
-        .get(webhook_id) as Webhook | undefined;
+        .prepare('SELECT * FROM webhooks WHERE uuid = ?')
+        .get(webhook_uuid) as Webhook | undefined;
       
       if (!webhook) {
         return reply.notFound('Webhook not found');
       }
+
+      const webhook_id = webhook.id;
 
       // Validate API key if required
       if (webhook.require_api_key) {
@@ -334,38 +345,49 @@ export async function webhookRoutes(fastify: FastifyInstance) {
         const payloadString = stableStringify(payload);
         const hash = crypto.createHash('sha256').update(payloadString).digest('hex');
         
-        // Use a transaction to ensure atomicity and prevent race conditions
-        const checkAndInsert = fastify.db.transaction(() => {
-          // Check for recent duplicate
-          const duplicate = fastify.db.prepare(`
-            SELECT id FROM processed_webhooks 
-            WHERE webhook_id = ? 
-            AND request_hash = ? 
-            AND datetime(processed_at) > datetime('now', '-' || ? || ' seconds')
-          `).get(webhook_id, hash, webhook.deduplication_window) as { id: number } | undefined;
+        // Use a transaction to ensure atomicity
+        const isDuplicate = fastify.db.transaction(() => {
+          // Check if this exact webhook+hash combination exists and is recent
+          const existing = fastify.db.prepare(`
+            SELECT id, processed_at FROM processed_webhooks 
+            WHERE webhook_id = ? AND request_hash = ?
+          `).get(webhook_id, hash) as { id: number; processed_at: string } | undefined;
 
-          if (duplicate) {
-            return true; // It is a duplicate
+          if (existing) {
+            // Check if it's within the deduplication window
+            const timeDiff = fastify.db.prepare(`
+              SELECT (julianday('now') - julianday(?)) * 86400 as seconds
+            `).get(existing.processed_at) as { seconds: number };
+
+            if (timeDiff.seconds <= webhook.deduplication_window) {
+              // It's a duplicate within the time window
+              return true;
+            } else {
+              // Outside the window - update the timestamp to allow this request
+              fastify.db.prepare(`
+                UPDATE processed_webhooks 
+                SET processed_at = datetime('now') 
+                WHERE id = ?
+              `).run(existing.id);
+              return false;
+            }
+          } else {
+            // New hash - insert it
+            fastify.db.prepare(`
+              INSERT INTO processed_webhooks (webhook_id, request_hash)
+              VALUES (?, ?)
+            `).run(webhook_id, hash);
+            return false;
           }
-
-          // Record this request
-          fastify.db.prepare(`
-            INSERT INTO processed_webhooks (webhook_id, request_hash)
-            VALUES (?, ?)
-          `).run(webhook_id, hash);
-          
-          return false; // Not a duplicate
-        });
-
-        const isDuplicate = checkAndInsert();
+        })();
 
         if (isDuplicate) {
           fastify.log.info({ webhook_id, hash }, 'Duplicate webhook skipped');
           return reply.code(202).send({ status: 'skipped', reason: 'duplicate' });
         }
 
-        // Cleanup old records for this webhook (simple cleanup)
-        // Delete records older than 2x the window to keep table size manageable
+        // Periodic cleanup: Delete old records (older than 2x the window)
+        // This keeps the table size manageable
         try {
           fastify.db.prepare(`
             DELETE FROM processed_webhooks 
@@ -373,11 +395,10 @@ export async function webhookRoutes(fastify: FastifyInstance) {
             AND datetime(processed_at) < datetime('now', '-' || ? || ' seconds')
           `).run(webhook_id, webhook.deduplication_window * 2);
         } catch (err) {
-          // Ignore cleanup errors to not block the request
           fastify.log.warn({ err }, 'Failed to cleanup old deduplication records');
         }
       }
-      
+
       // Get mappings
       const mappings = fastify.db
         .prepare('SELECT * FROM mappings WHERE webhook_id = ?')
