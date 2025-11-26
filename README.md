@@ -1,5 +1,5 @@
 ﻿<div align="center">
-  # Webhoxy: Your Ultimate Webhook Proxy & Transformation Service
+  <h1>Webhoxy: Your Ultimate Webhook Proxy & Transformation Service</h1>
 
   [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Node.js](https://img.shields.io/badge/Node.js-v20+-green.svg)](https://nodejs.org/)
@@ -114,3 +114,4 @@ We welcome contributions from the community! Whether it's bug reports, feature r
 ## 📄 License
 
 Webhoxy is open-source software licensed under the [MIT License](LICENSE).
+
