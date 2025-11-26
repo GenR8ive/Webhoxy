@@ -16,6 +16,10 @@ Webhoxy is a high-performance webhook proxy service built with Fastify and Solid
 - Node.js >= 20
 - Docker & Docker Compose (optional)
 
+### Clone Repo
+```bash
+git clone https://github.com/GenR8ive/Webhoxy.git
+```
 ### Running Locally (Development)
 
 1.  **Install Dependencies**
@@ -63,3 +67,5 @@ Webhoxy is a high-performance webhook proxy service built with Fastify and Solid
 ## License
 
 MIT
+
+
