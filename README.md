@@ -43,6 +43,7 @@ cd Webhoxy
 The easiest way to get Webhoxy up and running is with Docker Compose.
 
 ```bash
+cp env.example .env
 docker-compose up --build -d
 ```
 
@@ -56,12 +57,12 @@ This command will:
 
 If you prefer to run services independently for development:
 
-**a. Install Dependencies**
+**a. Install Dependencies and setup the environment variables**
 
 ```bash
 npm install # Install root dependencies
-cd api && npm install && cd ..
-cd web && npm install && cd ..
+cd api && cp env.example .env && npm install && cd ..
+cd web && cp env.example .env && npm install && cd ..
 ```
 
 **b. Start Services**
@@ -105,7 +106,7 @@ Explore the full capabilities of Webhoxy with our comprehensive documentation:
 
 For a deeper dive into Webhoxy's design principles, use cases, and future roadmap, check out our introductory blog post:
 
-[Read the Webhoxy Launch Blog Post](https://blog.example.com/introducing-webhoxy-your-webhook-supercharger) (Placeholder Link)
+[Read the Webhoxy Launch Blog Post](https://tscblogs.com/en/posts/when-a-webhook-gets-lost,-webhoxy-is-born)
 
 ## 🤝 Contributing
 
@@ -114,4 +115,5 @@ We welcome contributions from the community! Whether it's bug reports, feature r
 ## 📄 License
 
 Webhoxy is open-source software licensed under the [MIT License](LICENSE).
+
 
