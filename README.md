@@ -1,6 +1,13 @@
-﻿# Webhoxy: Your Ultimate Webhook Proxy & Transformation Service
+﻿<div align="center">
+  # Webhoxy: Your Ultimate Webhook Proxy & Transformation Service
 
-![Webhoxy Banner](https://raw.githubusercontent.com/GenR8ive/Webhoxy/main/assets/webhoxy-banner.png)
+  [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Node.js](https://img.shields.io/badge/Node.js-v20+-green.svg)](https://nodejs.org/)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/GenR8ive/Webhoxy/blob/main/CONTRIBUTING.md)
+  [![GitHub stars](https://img.shields.io/github/stars/GenR8ive/Webhoxy.svg?style=social&label=Star)](https://github.com/GenR8ive/Webhoxy)
+
+  ![Webhoxy Banner](assets/webhoxy-banner.png)
+</div>
 
 Webhoxy is a powerful, open-source webhook proxy service designed to streamline your development and integration workflows. Built with performance in mind using **Fastify** and a dynamic user interface powered by **SolidJS**, Webhoxy allows you to effortlessly receive, inspect, transform, and forward webhooks from any third-party service to your local development environment or production systems.
 
