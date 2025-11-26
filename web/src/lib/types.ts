@@ -1,5 +1,6 @@
 export interface Webhook {
   id: number;
+  uuid: string;
   name: string;
   description: string;
   target_url: string;

@@ -177,6 +177,92 @@ const migrations: Migration[] = [
       CREATE INDEX IF NOT EXISTS idx_processed_webhooks_time ON processed_webhooks(processed_at);
     `,
   },
+  {
+    id: 9,
+    name: 'add_unique_constraint_processed_webhooks',
+    sql: `
+      -- Create a new table with unique constraint on webhook_id and request_hash only
+      CREATE TABLE IF NOT EXISTS processed_webhooks_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        webhook_id INTEGER NOT NULL,
+        request_hash TEXT NOT NULL,
+        processed_at TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY (webhook_id) REFERENCES webhooks(id) ON DELETE CASCADE,
+        UNIQUE(webhook_id, request_hash)
+      );
+
+      -- Copy existing data (keeping only the most recent entry for each webhook_id + request_hash combination)
+      INSERT INTO processed_webhooks_new (webhook_id, request_hash, processed_at)
+      SELECT webhook_id, request_hash, MAX(processed_at) as processed_at
+      FROM processed_webhooks
+      GROUP BY webhook_id, request_hash;
+
+      -- Drop old table
+      DROP TABLE processed_webhooks;
+
+      -- Rename new table
+      ALTER TABLE processed_webhooks_new RENAME TO processed_webhooks;
+
+      -- Recreate indexes
+      CREATE INDEX IF NOT EXISTS idx_processed_webhooks_lookup ON processed_webhooks(webhook_id, request_hash);
+      CREATE INDEX IF NOT EXISTS idx_processed_webhooks_time ON processed_webhooks(processed_at);
+    `,
+  },
+  {
+    id: 10,
+    name: 'add_webhook_uuid',
+    sql: `
+      -- Add uuid column to webhooks table
+      ALTER TABLE webhooks ADD COLUMN uuid TEXT;
+
+      -- Generate UUIDs for existing webhooks using a simple approach
+      -- SQLite doesn't have built-in UUID generation, so we'll use a combination of random values
+      -- The application will generate proper UUIDs for new webhooks
+      UPDATE webhooks SET uuid = (
+        lower(hex(randomblob(4))) || '-' || 
+        lower(hex(randomblob(2))) || '-' || 
+        '4' || substr(lower(hex(randomblob(2))), 2) || '-' || 
+        substr('89ab', abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))), 2) || '-' || 
+        lower(hex(randomblob(6)))
+      ) WHERE uuid IS NULL;
+
+      -- Make uuid column NOT NULL and UNIQUE
+      -- We need to recreate the table to add NOT NULL constraint
+      CREATE TABLE webhooks_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        uuid TEXT NOT NULL UNIQUE,
+        name TEXT NOT NULL,
+        description TEXT,
+        target_url TEXT NOT NULL,
+        api_key TEXT,
+        allowed_ips TEXT,
+        require_api_key INTEGER NOT NULL DEFAULT 0,
+        require_ip_whitelist INTEGER NOT NULL DEFAULT 0,
+        deduplication_enabled INTEGER NOT NULL DEFAULT 0,
+        deduplication_window INTEGER NOT NULL DEFAULT 60,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+
+      -- Copy data from old table
+      INSERT INTO webhooks_new (id, uuid, name, description, target_url, api_key, allowed_ips, 
+                                require_api_key, require_ip_whitelist, deduplication_enabled, 
+                                deduplication_window, created_at)
+      SELECT id, uuid, name, description, target_url, api_key, allowed_ips, 
+             require_api_key, require_ip_whitelist, deduplication_enabled, 
+             deduplication_window, created_at
+      FROM webhooks;
+
+      -- Drop old table
+      DROP TABLE webhooks;
+
+      -- Rename new table
+      ALTER TABLE webhooks_new RENAME TO webhooks;
+
+      -- Recreate indexes
+      CREATE INDEX IF NOT EXISTS idx_webhooks_api_key ON webhooks(api_key);
+      CREATE INDEX IF NOT EXISTS idx_webhooks_uuid ON webhooks(uuid);
+    `,
+  },
 ];
 
 export function runMigrations(db: Database.Database): void {
