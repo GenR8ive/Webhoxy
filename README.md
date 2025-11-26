@@ -106,7 +106,7 @@ Explore the full capabilities of Webhoxy with our comprehensive documentation:
 
 For a deeper dive into Webhoxy's design principles, use cases, and future roadmap, check out our introductory blog post:
 
-[Read the Webhoxy Launch Blog Post](https://tscblogs.com/en/posts/when-a-webhook-gets-lost,-webhoxy-is-born)
+[Read the Webhoxy Launch Blog Post](https://tscblogs.com/en/posts/when-a-webhook-gets-lost-webhoxy-is-born)
 
 ## 🤝 Contributing
 
@@ -115,5 +115,6 @@ We welcome contributions from the community! Whether it's bug reports, feature r
 ## 📄 License
 
 Webhoxy is open-source software licensed under the [MIT License](LICENSE).
+
 
 
