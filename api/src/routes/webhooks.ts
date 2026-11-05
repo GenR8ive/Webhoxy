@@ -52,6 +52,34 @@ const paginationQuerySchema = z.object({
 
 
 export async function webhookRoutes(fastify: FastifyInstance) {
+  // Source systems (e.g. GitHub) may send non-JSON bodies. Fastify rejects
+  // unknown content types with 415 FST_ERR_CTP_INVALID_MEDIA_TYPE, so add
+  // parsers scoped to this plugin. Exact types win; '*' is the fallback.
+
+  // GitHub default: application/x-www-form-urlencoded with a `payload=<json>` field
+  fastify.addContentTypeParser(
+    'application/x-www-form-urlencoded',
+    { parseAs: 'string' },
+    (_request, body, done) => {
+      try {
+        const params = new URLSearchParams(body as string);
+        const payload = params.get('payload');
+        done(null, payload !== null ? JSON.parse(payload) : Object.fromEntries(params));
+      } catch (err) {
+        done(err as Error, undefined);
+      }
+    }
+  );
+
+  // Any other content type: parse as JSON when possible, otherwise keep raw string
+  fastify.addContentTypeParser('*', { parseAs: 'string' }, (_request, body, done) => {
+    try {
+      done(null, JSON.parse(body as string));
+    } catch {
+      done(null, body);
+    }
+  });
+
   // Helper function to generate UUID v4
   function generateUUID(): string {
     return crypto.randomUUID();
